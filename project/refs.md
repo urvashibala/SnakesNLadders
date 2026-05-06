@@ -1,7 +1,7 @@
 # MAIN REFS
 * [Main Ref](http://indiaboardgamesarchive.in/omekas/s/ancientindianboardgames/page/time)
 
-# SAKYA PANDITA (1)
+# REBIRTH GAME - SAKYA PANDITA (1)
 "Rebirth the Tibetan Game of Liberation"
 This Tibetan board game, teaching the basic principles of Buddhism, was created by Sakya Pandita Kunga Gyaltsen (1182-1251) to entertain his ailing mother while she was recovering from an illness. 
 
@@ -42,3 +42,31 @@ COPYRIGHT
 [SAKYA PANDITA PAINTING:](
 https://images.metmuseum.org/CRDImages/as/original/2006_285.JPG)
 PUBLICLY AVAILABLE
+
+# MOKSHA PATAM (By Saint Dnyaneshwar/Gwandev) (2)
+
+In the “Kridakaushalya” section of his 1871 Sanskrit magnum opus Brihad Jyotish Arnava, Venkatarama Harikrishna of Aurangabad states that the game was invented by the Marathi saint Dnyaneshwar
+
+# GYAN CHAUPAR BOARD
+https://commons.wikimedia.org/wiki/File:Gyan_Chaupar_National_Museum_India.JPG <- Gyan Chaupar National Museum India
+
+# HINDI JAIN BOARD
+https://wellcomecollection.org/works/geydgvms
+
+# ROYAL BOARD ASIATIC SOCIETY
+
+# JNANA CHAUPADA
+https://www.britishmuseum.org/collection/image/151009001
+
+DICE ARE RECTANGULAR, PIECES ARE DOME SHAPED
+https://www.instagram.com/reel/DKeAW7nJVRx/?utm_source=ig_web_copy_link&igsh=NTc4MTIwNjQ2YQ==
+
+# JAIN GYAN CHAUPAR WITH LOKAPURUSH MOTIF
+Calico Museum of Textile Ahmedabad with Lokapurusha (cosmic man) motif
+
+# LEELA GAME OF SELF KNOWLEDGE
+PIECES ARE RINGS -- placed back on the bearer after the game ends!
+
+https://leela.eu/en/
+
+# TAMIL -- PARAMA PADAM
