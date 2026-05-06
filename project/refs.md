@@ -56,7 +56,16 @@ Board not available.
 In the “Kridakaushalya” section of his 1871 Sanskrit magnum opus Brihad Jyotish Arnava, Venkatarama Harikrishna of Aurangabad states that the game was invented by the Marathi saint Dnyaneshwar
 
 # GYAN CHAUPAR BOARD
-https://commons.wikimedia.org/wiki/File:Gyan_Chaupar_National_Museum_India.JPG <- Gyan Chaupar National Museum India
+1.
+at boards/Gyan_Chaupar_National_Museum_India.JPG
+from https://commons.wikimedia.org/wiki/File:Gyan_Chaupar_National_Museum_India.JPG <- Gyan Chaupar National Museum India
+
+2. 
+at boards/gyan_chaupar1.png
+
+from https://www.asiaresearchnews.com/content/gyan-chaupar—-ancient-board-game-inspired-snakes-and-ladders-0
+
+more about this at project/gyanchaupar.md
 
 # JNANA/GYAN BAZI -- HINDI JAIN BOARDS -- 19th century, on cloth, gouache
 1. at boards/hindi_jain_board.jpg
@@ -64,11 +73,16 @@ https://wellcomecollection.org/works/geydgvms
 
 2. at boards/Jain Snakes and Ladders (Bnana Bazi).jpg
 
-3. Jain Gyan Chaupar with Lokapurush Motif
+refer to project/gyanchaupar.md for jain board version (look for this specific information)
 
+3. Jain Gyan Chaupar with Lokapurush Motif
+boards/jain_gyan_chaupar_with_motif.jpg
+
+Calico Museum of Textile Ahmedabad with Lokapurusha (cosmic man) motif, 84 squares.
 
 # ROYAL BOARD ASIATIC SOCIETY - 1832
 at boards/royal_asiatic_society.jpg
+
 Around 1832, a Captain Henry Dundas Robertson would present what he called the “Shastree’s Game of Heaven and Hell” to the Royal Asiatic Society in London where the 128-square Vaishnav Gyan Chaupar board can still be seen.
 
 # JNANA CHAUPADA - 1834
@@ -79,13 +93,11 @@ https://www.britishmuseum.org/collection/image/151009001
 DICE ARE RECTANGULAR, PIECES ARE DOME SHAPED
 https://www.instagram.com/reel/DKeAW7nJVRx/?utm_source=ig_web_copy_link&igsh=NTc4MTIwNjQ2YQ==
 
-# JAIN GYAN CHAUPAR WITH LOKAPURUSH MOTIF
-at boards/jain_gyan_chaupar.jpg
-Calico Museum of Textile Ahmedabad with Lokapurusha (cosmic man) motif, 84 squares.
 
 # LEELA GAME OF SELF KNOWLEDGE - 2000-5000 years ago
 boards/Leela_game_of_self_discovery.jpg for the main board 
-boards/Leela_game_translation.jpeg for the translation in English of each tile (can use this to augment/overlay/switch between boards for the players' understanding)
+
+and boards/Leela_game_translation.jpeg for the translation in English of each tile (can use this to augment/overlay/switch between boards for the players' understanding)
 
 PIECES ARE RINGS -- placed back on the bearer after the game ends!
 
@@ -117,14 +129,18 @@ at boards/Milton Checkered Game of Life.jpg
 The design of Milton Bradley’s first game was a simple checkerboard, a familiar form to most people, with alternating red and white squares in an eight-by-eight grid. The red squares were neutral and the white squares contained words representing good or bad values or conditions, from honesty or perseverance or truth to idleness or crime or ruin. Landing on a constructive trait or situation would send the player forward, advancing his positive path through life, whereas landing on a place of vice would impede a player’s progress.
 
 # TAMIL -- PARAMA PADAM SOPANAM PATA - 19th century, undated
-Paramapadam 
+
+1.
+boards/Parampada Sopanam Pata.jpg for original lithograph board
 
 Board is a lithograph in Blockwood printing. of the game Paramapada sōpānam, a traditional Indian indoor game: in a chart titled: Paramapada Sopanam, in which the highest ascent indicates reaching Heaven and anywhere else where the pawn lands indicate various worlds according to Hindu mythology. Language note: In Kannada and Devanagari.
 
-boards/PARAMA_PATHAM.jpg
+2.
+at boards/PARAMA_PATHAM.jpg for modern board (paper print)
 
 https://www.eshwarshop.com/products/copy-of-baby-kajal-baby-seratta?srsltid=AfmBOopGxebJxQF7gScBd-aiitlTfbY-YTBdnlEEP5U67eVdoNAHScaL
 
+for both versions of parama patham,
 Cowrie shells used for rolling in *Thayam*; a count of 5 has landed.
 Paramapadam (Snakes and Ladders) is a traditional board game. Played by two or more people, the game board consists of a grid of square cells. Typically, the board features a grid of 8×8, 10×10, or 12×12 squares. Certain squares are connected by ladders and snakes. The number and arrangement of the ladders and snakes may vary from one board to another.[1]
 
@@ -134,7 +150,7 @@ This game was played in ancient India around the 2nd century BCE. It was introdu
 Vaikunta Ekadasi
 “Traditionally, Parama Pada Sopanam is played on the night of Vaikuntha Ekadashi (the 11th day after the new moon in the Tamil month of Margazhi). Many Hindus believe that the door to Vaikuntha, the abode of Lord Vishnu, will be wide open to welcome the devout and the faithful. Hindus also believe that dying on Vaikuntha Ekadashi will take them directly to the abode of Vishnu, liberating them from the cycle of rebirth. On this day, the devout stay up all night fasting and praying and playing the game helps them pass the time till dawn, when the fast is broken.”
 
-**Gameplay**
+Gameplay
 This game involves moving game pieces by rolling a die. It can be played by two or more people. No special skills are required to play it. Generally, to start the game, a player must roll a "1" on the die. Subsequently, players take turns rolling the die and moving their pieces according to the number rolled. A piece landing at the foot of a ladder ascends to the top of the ladder, while a piece landing at the mouth of a snake slides down to the snake's tail. The piece that successfully navigates these obstacles and reaches the final square wins the game.
 
 # SUFI VERSION - 1915
@@ -147,4 +163,5 @@ at boards/FHAyersCircular.jpg
 Design: circular spiral design, chromolithograph mounted on a round wooden board; marked with red and green No. of squares: 100 Squares illustrated: none Square numbering: 1 to 100 Squares titled: none Subject of starting square: none Subject of ending square: none
 
 # KISMET - 1895
+at boards/Kismet.jpg
 Kismet, c.1895. Chromolithograph on paper and card. Designed in England, manufactured in Bavaria. Victoria & Albert Museum, MISC.423-1981. Photo credit: Victoria and Albert Museum, London
