@@ -6,10 +6,15 @@
 # REBIRTH GAME - SAKYA PANDITA (1)
 "Rebirth the Tibetan Game of Liberation"
 
-Three versions (interchangeable) at:
+Three versions (interchangeable) 
+
+board at:
 1. boards/sakya_pandita1.jpg
 2. boards/sakya_pandita2.jpg
 3. boards/sakya_pandita3.jpg
+
+token: shells (randomise within folder)
+number of squares: 104
 
 This Tibetan board game, teaching the basic principles of Buddhism, was created by Sakya Pandita Kunga Gyaltsen (1182-1251) to entertain his ailing mother while she was recovering from an illness. 
 
