@@ -170,3 +170,46 @@ Design: circular spiral design, chromolithograph mounted on a round wooden board
 # KISMET - 1895
 at boards/Kismet.jpg
 Kismet, c.1895. Chromolithograph on paper and card. Designed in England, manufactured in Bavaria. Victoria & Albert Museum, MISC.423-1981. Photo credit: Victoria and Albert Museum, London
+
+
+# DICE SYSTEMS
+
+## COWRIE DICE
+
+Alternate (unused) rule system: * If all cowries down - 8 points
+* If all up -- rush and grab -- then 4 points each
+* If 2 close, 2 up
+
+6-7 shells
+
+7 SHELLS
+* 1 up, 6 down - 10 points + extra turn
+* 2 up, 5 down - 2 points
+* 3 up, 4 down - 3 points
+* 4 up, 3 down - 4 points
+* 5 up, 2 down - 25 points + extra turn
+* 6 up, 1 down -- 30/35 points + extra turn
+* all 7 up -- 14 points + extra turn
+* all down -- 7 points + extra turn
+
+Cancelling
+* If you do 7-7-7 or 14-14-14 it cancels out
+
+1 Shell Up: Move 10 spaces + another turn.
+2 Shells Up: Move 2 spaces.
+3 Shells Up: Move 3 spaces.
+4 Shells Up: Move 4 spaces.
+5 Shells Up: Move 5 spaces.
+6 Shells Up: Move 6 spaces + another turn.
+0 Shells Up (All Closed): Move 25 spaces + another turn. 
+
+FINAL COWRIE SHELL DICE RULES used in this project:
+"Down" if turtle-shell side up
+"Up" if mouth of shell is up
+
+Rolling the Cowrie Shells
+
+Each open mouth of the cowrie shell denotes 1 point.
+The back of the cowrie shell denotes 0 points.
+If all 6 cowries fall on their open mouths showing only their backs, then it’s a full 12 points.
+Possible scores: 1, 2, 3, 4, 5, 6, 12.
