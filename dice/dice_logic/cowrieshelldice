@@ -11,12 +11,16 @@ If all 6 cowries fall on their open mouths showing only their backs, then it’s
 Possible scores: 1, 2, 3, 4, 5, 6, 12.
 '''
 
+from pathlib import Path
+import math
+import random
+import re
+import webbrowser
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from PIL import Image
-from IPython.display import HTML
-import random
-import math
+from PIL import Image, ImageDraw
+
 
 CANVAS_WIDTH = 500
 CANVAS_HEIGHT = 500
@@ -27,121 +31,226 @@ MARGIN = 60
 
 THROW_X = CANVAS_WIDTH / 2
 THROW_Y = CANVAS_HEIGHT / 2
-ANIMATION_FRAMES = 42
+ANIMATION_FRAMES = 30
+
+BASE_DIR = Path(__file__).resolve().parent
+IMAGE_DIR = BASE_DIR.parent / "dice_images"
+
 
 def calculate_distance(x1, y1, x2, y2):
-    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+        return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
 
 def can_place_shell(x, y, existing_shells, min_distance):
-    for shell_x, shell_y in existing_shells:
-        if calculate_distance(x, y, shell_x, shell_y) < min_distance:
-            return False
-    return True
+        for shell_x, shell_y in existing_shells:
+                if calculate_distance(x, y, shell_x, shell_y) < min_distance:
+                        return False
+        return True
+
 
 def generate_positions(num_shells, canvas_width, canvas_height, shell_radius, min_distance):
-    positions = []
-    for _ in range(num_shells):
-        placed = False
-        while not placed:
-            x = random.randint(MARGIN + shell_radius, canvas_width - MARGIN - shell_radius)
-            y = random.randint(MARGIN + shell_radius, canvas_height - MARGIN - shell_radius)
-            if can_place_shell(x, y, positions, min_distance):
-                positions.append((x, y))
-                placed = True
-    return positions
+        positions = []
+        for _ in range(num_shells):
+                placed = False
+                while not placed:
+                        x = random.randint(MARGIN + shell_radius, canvas_width - MARGIN - shell_radius)
+                        y = random.randint(MARGIN + shell_radius, canvas_height - MARGIN - shell_radius)
+                        if can_place_shell(x, y, positions, min_distance):
+                                positions.append((x, y))
+                                placed = True
+        return positions
+
 
 def roll_shells(num_shells):
-    return [random.choice([0, 1]) for _ in range(num_shells)]
+        return [random.choice([0, 1]) for _ in range(num_shells)]
+
 
 def calculate_score(states):
-    up_count = sum(states)
-    return 12 if up_count == 0 else up_count
+        up_count = sum(states)
+        return 12 if up_count == 0 else up_count
+
 
 def smooth_step(value):
-    value = max(0, min(1, value))
-    return value * value * (3 - 2 * value)
+        value = max(0, min(1, value))
+        return value * value * (3 - 2 * value)
+
+
+def build_background(background_path):
+        background = Image.new("RGBA", (1600, 900), (234, 226, 211, 255))
+        draw = ImageDraw.Draw(background)
+        tile_size = 120
+        inner_size = 104
+
+        for x in range(0, background.width, tile_size):
+                for y in range(0, background.height, tile_size):
+                        color = (208, 196, 178, 255) if (x // tile_size + y // tile_size) % 2 == 0 else (189, 175, 156, 255)
+                        draw.rectangle([x, y, x + inner_size, y + inner_size], fill=color)
+
+        background.save(background_path)
+
 
 def display_dice():
-    final_states = roll_shells(NUM_SHELLS)
-    final_positions = generate_positions(NUM_SHELLS, CANVAS_WIDTH, CANVAS_HEIGHT, SHELL_RADIUS, MIN_DISTANCE)
-    final_angles = [random.randint(0, 359) for _ in range(NUM_SHELLS)]
-    score = calculate_score(final_states)
+        final_states = roll_shells(NUM_SHELLS)
+        final_positions = generate_positions(NUM_SHELLS, CANVAS_WIDTH, CANVAS_HEIGHT, SHELL_RADIUS, MIN_DISTANCE)
+        final_angles = [random.randint(0, 359) for _ in range(NUM_SHELLS)]
+        score = calculate_score(final_states)
 
-    cowrie_up_img = Image.open("../dice_images/cowrieup.png")
-    cowrie_down_img = Image.open("../dice_images/cowriedown.png")
-    cowrie_up_img = cowrie_up_img.resize((SHELL_RADIUS * 2, SHELL_RADIUS * 2))
-    cowrie_down_img = cowrie_down_img.resize((SHELL_RADIUS * 2, SHELL_RADIUS * 2))
+        cowrie_up_img = Image.open(IMAGE_DIR / "cowrieup.png").resize((SHELL_RADIUS * 2, SHELL_RADIUS * 2))
+        cowrie_down_img = Image.open(IMAGE_DIR / "cowriedown.png").resize((SHELL_RADIUS * 2, SHELL_RADIUS * 2))
 
-    start_positions = [
-        (THROW_X + random.uniform(-12, 12), THROW_Y + random.uniform(-12, 12))
-        for _ in range(NUM_SHELLS)
-    ]
-    flip_frames = [random.randint(8, 28) for _ in range(NUM_SHELLS)]
-    settle_frames = [random.randint(30, 39) for _ in range(NUM_SHELLS)]
-    arc_heights = [random.uniform(30, 85) for _ in range(NUM_SHELLS)]
-    spin_directions = [random.choice([-1, 1]) for _ in range(NUM_SHELLS)]
-    toss_noise = [random.uniform(0.5, 1.5) for _ in range(NUM_SHELLS)]
+        start_positions = [
+                (THROW_X + random.uniform(-12, 12), THROW_Y + random.uniform(-12, 12))
+                for _ in range(NUM_SHELLS)
+        ]
+        flip_frames = [random.randint(5, 18) for _ in range(NUM_SHELLS)]
+        settle_frames = [random.randint(20, 27) for _ in range(NUM_SHELLS)]
+        arc_heights = [random.uniform(24, 62) for _ in range(NUM_SHELLS)]
+        spin_directions = [random.choice([-1, 1]) for _ in range(NUM_SHELLS)]
+        toss_noise = [random.uniform(0.4, 1.1) for _ in range(NUM_SHELLS)]
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.set_xlim(0, CANVAS_WIDTH)
-    ax.set_ylim(CANVAS_HEIGHT, 0)
-    ax.set_aspect('equal')
-    ax.axis('off')
+        fig, ax = plt.subplots(figsize=(8, 8))
+        fig.patch.set_alpha(0)
+        ax.set_facecolor((0, 0, 0, 0))
+        ax.set_xlim(0, CANVAS_WIDTH)
+        ax.set_ylim(CANVAS_HEIGHT, 0)
+        ax.set_aspect("equal")
+        ax.axis("off")
 
-    shell_artists = []
-    for _ in range(NUM_SHELLS):
-        artist = ax.imshow(cowrie_up_img, extent=[0, 0, 0, 0], animated=True)
-        shell_artists.append(artist)
+        shell_artists = []
+        for _ in range(NUM_SHELLS):
+                artist = ax.imshow(cowrie_up_img, extent=[0, 0, 0, 0], animated=True)
+                shell_artists.append(artist)
 
-    def shell_state_at_frame(shell_index, frame_index):
-        if frame_index < flip_frames[shell_index]:
-            return 1
-        if frame_index < settle_frames[shell_index]:
-            if random.random() < 0.28:
-                return 1 - final_states[shell_index]
-        return final_states[shell_index]
+        settled_states = [1] * NUM_SHELLS
+        flip_chances = [random.uniform(0.16, 0.34) for _ in range(NUM_SHELLS)]
 
-    def build_frame(frame_index):
-        progress = smooth_step(frame_index / max(1, ANIMATION_FRAMES - 1))
-        toss_wave = math.sin(progress * math.pi * 4)
-        for shell_index, artist in enumerate(shell_artists):
-            start_x, start_y = start_positions[shell_index]
-            end_x, end_y = final_positions[shell_index]
-            arc_height = arc_heights[shell_index] * math.sin(progress * math.pi)
-            travel_x = start_x + (end_x - start_x) * progress
-            travel_y = start_y + (end_y - start_y) * progress - arc_height * (1 - progress)
-            travel_y += toss_noise[shell_index] * toss_wave * (1 - progress) * 4
+        def shell_state_at_frame(shell_index, frame_index):
+                if frame_index < flip_frames[shell_index]:
+                        return 1
+                if frame_index < settle_frames[shell_index]:
+                        if random.random() < flip_chances[shell_index]:
+                                return 1 - settled_states[shell_index]
+                else:
+                        settled_states[shell_index] = final_states[shell_index]
+                return settled_states[shell_index]
 
-            shell_state = shell_state_at_frame(shell_index, frame_index)
-            image = cowrie_up_img if shell_state == 1 else cowrie_down_img
-            current_angle = spin_directions[shell_index] * (960 * (1 - progress)) + final_angles[shell_index] * progress
-            if progress >= 0.96:
-                current_angle = final_angles[shell_index]
-                travel_x = end_x
-                travel_y = end_y
+        def build_frame(frame_index):
+                ax.set_title(f"Score: {score}", fontsize=16, fontweight="bold", pad=14)
+                progress = smooth_step(frame_index / max(1, ANIMATION_FRAMES - 1))
+                toss_wave = math.sin(progress * math.pi * 4)
 
-            rotated_image = image.rotate(current_angle, resample=Image.BICUBIC)
-            artist.set_data(rotated_image)
-            artist.set_extent([
-                travel_x - SHELL_RADIUS,
-                travel_x + SHELL_RADIUS,
-                travel_y + SHELL_RADIUS,
-                travel_y - SHELL_RADIUS,
-            ])
+                for shell_index, artist in enumerate(shell_artists):
+                        start_x, start_y = start_positions[shell_index]
+                        end_x, end_y = final_positions[shell_index]
+                        arc_height = arc_heights[shell_index] * math.sin(progress * math.pi)
+                        travel_x = start_x + (end_x - start_x) * progress
+                        travel_y = start_y + (end_y - start_y) * progress - arc_height * (1 - progress)
+                        travel_y += toss_noise[shell_index] * toss_wave * (1 - progress) * 4
 
-        ax.set_title(f"Score: {score}", fontsize=16, fontweight='bold', pad=14)
-        return shell_artists
+                        shell_state = shell_state_at_frame(shell_index, frame_index)
+                        image = cowrie_up_img if shell_state == 1 else cowrie_down_img
+                        current_angle = spin_directions[shell_index] * (960 * (1 - progress)) + final_angles[shell_index] * progress
 
-    animation = FuncAnimation(
-        fig,
-        build_frame,
-        frames=ANIMATION_FRAMES,
-        interval=45,
-        blit=False,
-        repeat=False,
-    )
+                        if progress >= 0.96:
+                                current_angle = final_angles[shell_index]
+                                travel_x = end_x
+                                travel_y = end_y
 
-    plt.close(fig)
-    return HTML(animation.to_jshtml())
+                        rotated_image = image.rotate(current_angle, resample=Image.BICUBIC)
+                        artist.set_data(rotated_image)
+                        artist.set_extent([
+                                travel_x - SHELL_RADIUS,
+                                travel_x + SHELL_RADIUS,
+                                travel_y + SHELL_RADIUS,
+                                travel_y - SHELL_RADIUS,
+                        ])
+
+                return shell_artists
+
+        animation = FuncAnimation(
+                fig,
+                build_frame,
+                frames=ANIMATION_FRAMES,
+                interval=30,
+                blit=False,
+                repeat=False,
+        )
+
+        plt.close(fig)
+
+        animation_html = animation.to_jshtml()
+
+        background_path = BASE_DIR / "cowrie_shell_dice_background.png"
+        build_background(background_path)
+
+        output_path = BASE_DIR / "cowrie_shell_dice_preview.html"
+        output_path.write_text(
+                f'''<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html, body {{
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }}
+        body {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url("{background_path.name}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        .stage {{
+            width: min(92vw, 92vh);
+            height: min(92vw, 92vh);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }}
+        .stage > div {{
+            width: 100% !important;
+            height: 100% !important;
+        }}
+        .stage canvas {{
+            width: 100% !important;
+            height: 100% !important;
+        }}
+        button {{
+            display: none !important;
+        }}
+    </style>
+</head>
+<body>
+    <div class="stage">
+        {animation_html}
+    </div>
+    <script>
+                        window.addEventListener('load', function () {{
+                                setTimeout(function () {{
+                                        const buttons = document.querySelectorAll('button');
+                                        buttons.forEach((button) => {{
+                                                const title = (button.getAttribute('title') || '').toLowerCase();
+                                                if (title.includes('play') || title.includes('animation')) {{
+                                                        button.click();
+                                                }}
+                                        }});
+                                }}, 250);
+                        }});
+    </script>
+</body>
+</html>''',
+                encoding="utf-8",
+        )
+
+        webbrowser.open(output_path.as_uri())
+        return output_path
+
 
 display_dice()
