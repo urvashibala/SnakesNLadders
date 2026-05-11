@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://snakes-n-ladders.local/board.schema.json",
+  "type": "object",
+  "required": ["id", "name", "imageUrl", "totalSquares", "squares", "transitions", "startSquare", "winSquare"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "imageUrl": { "type": "string", "minLength": 1 },
+    "totalSquares": { "type": "integer", "minimum": 1 },
+    "startSquare": { "type": "integer", "minimum": 1 },
+    "winSquare": { "type": "integer", "minimum": 1 },
+    "squares": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "x", "y"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "space": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "from", "to"],
+        "properties": {
+          "type": { "type": "string", "enum": ["snake", "ladder", "jump"] },
+          "from": { "type": "integer", "minimum": 1 },
+          "to": { "type": "integer", "minimum": 1 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

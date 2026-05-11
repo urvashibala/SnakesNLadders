@@ -1,0 +1,18 @@
+{
+  "name": "snakes-n-ladders-ancient-boards",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "validate:boards": "node src/game/validateBoards.js"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

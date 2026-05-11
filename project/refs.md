@@ -65,6 +65,24 @@ In the “Kridakaushalya” section of his 1871 Sanskrit magnum opus Brihad Jyot
 at boards/Gyan_Chaupar_National_Museum_India.JPG
 from https://commons.wikimedia.org/wiki/File:Gyan_Chaupar_National_Museum_India.JPG <- Gyan Chaupar National Museum India
 
+SNAKE SQUARE MAPPINGS
+13→0
+17→1
+45→ 9
+48→ 10
+58→ 21
+67 → 23
+60→ 41
+76→ 52
+75→ 2
+
+LADDER SQUARE MAPPINGS
+7 → 44
+44→ 49 (this only works if you land on 44 directly, not if you routed from 7 to 44 then to 49, which is NOT allowed)
+55→80
+47→ 81
+65→ 68
+
 2. 
 at boards/gyan_chaupar1.png
 
