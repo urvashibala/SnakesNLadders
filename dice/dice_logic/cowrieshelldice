@@ -75,18 +75,7 @@ def smooth_step(value):
         return value * value * (3 - 2 * value)
 
 
-def build_background(background_path):
-        background = Image.new("RGBA", (1600, 900), (234, 226, 211, 255))
-        draw = ImageDraw.Draw(background)
-        tile_size = 120
-        inner_size = 104
 
-        for x in range(0, background.width, tile_size):
-                for y in range(0, background.height, tile_size):
-                        color = (208, 196, 178, 255) if (x // tile_size + y // tile_size) % 2 == 0 else (189, 175, 156, 255)
-                        draw.rectangle([x, y, x + inner_size, y + inner_size], fill=color)
-
-        background.save(background_path)
 
 
 def display_dice():
@@ -180,9 +169,6 @@ def display_dice():
 
         animation_html = animation.to_jshtml()
 
-        background_path = BASE_DIR / "cowrie_shell_dice_background.png"
-        build_background(background_path)
-
         output_path = BASE_DIR / "cowrie_shell_dice_preview.html"
         output_path.write_text(
                 f'''<!doctype html>
@@ -201,10 +187,7 @@ def display_dice():
             display: flex;
             align-items: center;
             justify-content: center;
-            background-image: url("{background_path.name}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: transparent;
         }}
         .stage {{
             width: min(92vw, 92vh);
@@ -232,17 +215,17 @@ def display_dice():
         {animation_html}
     </div>
     <script>
-                        window.addEventListener('load', function () {{
-                                setTimeout(function () {{
-                                        const buttons = document.querySelectorAll('button');
-                                        buttons.forEach((button) => {{
-                                                const title = (button.getAttribute('title') || '').toLowerCase();
-                                                if (title.includes('play') || title.includes('animation')) {{
-                                                        button.click();
-                                                }}
-                                        }});
-                                }}, 250);
-                        }});
+        window.addEventListener('load', function () {{
+            setTimeout(function () {{
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach((button) => {{
+                    const title = (button.getAttribute('title') || '').toLowerCase();
+                    if (title.includes('play') || title.includes('animation')) {{
+                        button.click();
+                    }}
+                }});
+            }}, 250);
+        }});
     </script>
 </body>
 </html>''',
