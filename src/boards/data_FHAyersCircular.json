@@ -1,6 +1,7 @@
 {
   "id": "fhayerscircular",
   "name": "FHAyers Circular Board",
+  "historyText": "Lorem ipsum long paragraph text",
   "imageUrl": "/boards/FHAyersCircular.jpg",
   "totalSquares": 101,
   "startSquare": 0,

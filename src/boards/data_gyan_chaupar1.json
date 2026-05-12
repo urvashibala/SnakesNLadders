@@ -1,6 +1,7 @@
 {
   "id": "gyan_chaupar1",
   "name": "Gyan Chaupar 1 (body board)",
+  "historyText": "Lorem ipsum long paragraph text",
   "imageUrl": "boards/gyan_chaupar1.png",
   "totalSquares": 83,
   "startSquare": 1,

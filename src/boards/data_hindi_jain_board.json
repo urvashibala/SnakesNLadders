@@ -1,6 +1,7 @@
 {
   "id": "hindi_jain_board",
   "name": "Hindi Jain Board",
+  "historyText": "Lorem ipsum long paragraph text",
   "imageUrl": "boards/hindi_jain_board.jpg",
   "totalSquares": 73,
   "startSquare": 1,
