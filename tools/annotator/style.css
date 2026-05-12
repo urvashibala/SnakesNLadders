@@ -1,0 +1,16 @@
+:root{--bg:#f6f8fa;--muted:#666}
+body{font-family:Inter, Arial, sans-serif;background:var(--bg);margin:0;padding:18px}
+.container{max-width:1200px;margin:0 auto}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.controls input[type="text"]{flex:1;padding:6px}
+.viewer{border:1px solid #ddd;background:white;padding:8px}
+.imageWrap{position:relative;display:inline-block}
+#boardImg{display:block;max-width:900px;height:auto}
+#overlay{position:absolute;left:0;top:0;pointer-events:none}
+.coordsInfo{margin-bottom:8px;color:var(--muted)}
+.actions{margin:8px 0}
+.list{margin-top:12px}
+.list ol{background:#fff;padding:8px;border:1px solid #ddd;max-height:220px;overflow:auto}
+.output{margin-top:12px;background:#fff;padding:8px;border:1px solid #ddd}
+.outActions{margin-top:6px}
+button{padding:6px 10px}

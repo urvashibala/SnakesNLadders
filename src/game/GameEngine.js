@@ -10,6 +10,15 @@ function clonePlayer(player, index, startSquare) {
   };
 }
 
+function formatSquare(board, squareId) {
+  const square = board.squares.find((item) => item.id === squareId);
+  if (!square) {
+    return `${squareId} (missing square)`;
+  }
+
+  return `${squareId} (${square.x.toFixed(1)}, ${square.y.toFixed(1)})`;
+}
+
 export class GameEngine {
   constructor(boardConfig, players = [], options = {}) {
     const validation = validateBoardConfig(boardConfig);
@@ -24,7 +33,11 @@ export class GameEngine {
     this.players = players.map((player, index) => clonePlayer(player, index, boardConfig.startSquare));
     this.turnIndex = 0;
     this.turnCount = 0;
-    this.transitionMap = new Map(boardConfig.transitions.map((transition) => [transition.from, transition]));
+    this.transitionMap = new Map();
+
+    for (const transition of boardConfig.transitions) {
+      this.transitionMap.set(transition.from, transition);
+    }
   }
 
   currentPlayer() {
@@ -41,25 +54,44 @@ export class GameEngine {
       return { moved: false, reason: 'Player is unavailable.' };
     }
 
-    let nextSquare = player.square + steps;
+    const startSquare = player.square;
+    let landingSquare = startSquare + steps;
+    console.log(
+      `[movePlayer] ${player.name} starts at ${formatSquare(this.board, startSquare)}, roll ${steps}, landing candidate ${formatSquare(this.board, landingSquare)}`
+    );
 
-    if (nextSquare > this.board.winSquare) {
+    if (landingSquare > this.board.winSquare) {
       if (this.options.overshootRule === 'cap') {
-        nextSquare = this.board.winSquare;
+        landingSquare = this.board.winSquare;
+        console.log(`[movePlayer] Overshoot capped to ${formatSquare(this.board, landingSquare)}`);
       } else if (this.options.overshootRule === 'exact') {
         return { moved: false, reason: 'Exact landing required.' };
       }
     }
 
-    const trace = [player.square];
-    let resolvedSquare = nextSquare;
-    let safety = 0;
+    const trace = [startSquare];
+    let resolvedSquare = landingSquare;
+    const transition = this.transitionMap.get(resolvedSquare) ?? null;
 
-    while (this.transitionMap.has(resolvedSquare) && safety < 10) {
-      const transition = this.transitionMap.get(resolvedSquare);
+    console.log(
+      `[movePlayer] Checking for transition on ${formatSquare(this.board, resolvedSquare)}`
+    );
+
+    if (transition) {
+      const fromSquare = this.getSquare(transition.from);
+      const toSquare = this.getSquare(transition.to);
       trace.push(resolvedSquare, transition.to);
+      console.log(
+        `[transition] ${transition.type} applies: ${formatSquare(this.board, transition.from)} -> ${formatSquare(this.board, transition.to)}`
+      );
+      if (fromSquare && toSquare) {
+        console.log(
+          `[transition-detail] from (${fromSquare.x.toFixed(1)}, ${fromSquare.y.toFixed(1)}) to (${toSquare.x.toFixed(1)}, ${toSquare.y.toFixed(1)})`
+        );
+      }
       resolvedSquare = transition.to;
-      safety += 1;
+    } else {
+      console.log(`[movePlayer] No transition on ${formatSquare(this.board, resolvedSquare)}`);
     }
 
     player.square = resolvedSquare;
@@ -67,12 +99,15 @@ export class GameEngine {
       player.finished = true;
     }
 
+    console.log(`[movePlayer] Final: ${formatSquare(this.board, startSquare)} -> ${formatSquare(this.board, resolvedSquare)}`);
+
     return {
       moved: true,
       playerId: player.id,
       from: trace[0],
       to: resolvedSquare,
       trace,
+      transition,
       finished: player.finished
     };
   }
@@ -96,6 +131,30 @@ export class GameEngine {
 
   isComplete() {
     return this.players.some((player) => player.finished);
+  }
+
+  getAnimationPath(fromSquare, toSquare) {
+    const fromPos = this.board.squares.find((s) => s.id === fromSquare);
+    const toPos = this.board.squares.find((s) => s.id === toSquare);
+
+    if (!fromPos || !toPos) {
+      return [[fromPos?.x ?? 0, fromPos?.y ?? 0], [toPos?.x ?? 0, toPos?.y ?? 0]];
+    }
+
+    // Create smooth path between squares
+    const path = [];
+    const segments = Math.max(10, Math.ceil(Math.sqrt((toPos.x - fromPos.x) ** 2 + (toPos.y - fromPos.y) ** 2) / 20));
+
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      // Ease-in-out for smooth animation
+      const easeT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      const x = fromPos.x + (toPos.x - fromPos.x) * easeT;
+      const y = fromPos.y + (toPos.y - fromPos.y) * easeT;
+      path.push([x, y]);
+    }
+
+    return path;
   }
 
   getState() {

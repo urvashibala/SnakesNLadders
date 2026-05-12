@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Image Annotator</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Image Annotator</h1>
+
+      <div class="controls">
+        <label>Image URL (or leave blank to use default):</label>
+        <input id="imgUrl" type="text" placeholder="/public/boards/Gyan_Chaupar_National_Museum_India.JPG" />
+        <label>Start index:</label>
+        <label><input type="radio" name="start" value="1" checked /> Start at 1</label>
+        <label><input type="radio" name="start" value="0" /> Start at 0</label>
+        <button id="loadBtn">Load Image</button>
+        <input id="fileInput" type="file" accept="image/*" />
+      </div>
+
+      <div id="viewer" class="viewer">
+        <div id="coordsInfo" class="coordsInfo">Image not loaded</div>
+        <div id="imageWrap" class="imageWrap">
+          <img id="boardImg" alt="board" crossorigin="anonymous">
+          <canvas id="overlay"></canvas>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="undoBtn">Undo</button>
+        <button id="clearBtn">Clear</button>
+        <button id="doneBtn">Done (show JSON)</button>
+      </div>
+
+      <div class="list">
+        <h2>Recorded Points</h2>
+        <ol id="pointsList"></ol>
+      </div>
+
+      <div id="output" class="output" hidden>
+        <h3>Exported JSON</h3>
+        <textarea id="jsonOut" rows="10"></textarea>
+        <div class="outActions"><button id="copyBtn">Copy to Clipboard</button><button id="closeOut">Close</button></div>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

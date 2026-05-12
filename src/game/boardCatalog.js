@@ -42,6 +42,13 @@ export const boardCatalog = [
     playable: false
   },
   {
+    id: 'gyan_chaupar_annotated',
+    group: 'Gyan Chaupar Board',
+    title: 'National Museum India (Annotated - Testing)',
+    imageUrl: '/boards/Gyan_Chaupar_National_Museum_India.JPG',
+    playable: true
+  },
+  {
     id: 'jain_board_1',
     group: 'Jnana/Gyan Bazi -- Hindi Jain Boards -- 19th century, on cloth, gouache',
     title: 'Version 1',

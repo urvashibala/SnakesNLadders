@@ -8,15 +8,15 @@
     "name": { "type": "string", "minLength": 1 },
     "imageUrl": { "type": "string", "minLength": 1 },
     "totalSquares": { "type": "integer", "minimum": 1 },
-    "startSquare": { "type": "integer", "minimum": 1 },
-    "winSquare": { "type": "integer", "minimum": 1 },
+    "startSquare": { "type": "integer", "minimum": 0 },
+    "winSquare": { "type": "integer", "minimum": 0 },
     "squares": {
       "type": "array",
       "items": {
         "type": "object",
         "required": ["id", "x", "y"],
         "properties": {
-          "id": { "type": "integer", "minimum": 1 },
+          "id": { "type": "integer", "minimum": 0 },
           "x": { "type": "number" },
           "y": { "type": "number" },
           "space": { "type": "number" }
@@ -31,8 +31,8 @@
         "required": ["type", "from", "to"],
         "properties": {
           "type": { "type": "string", "enum": ["snake", "ladder", "jump"] },
-          "from": { "type": "integer", "minimum": 1 },
-          "to": { "type": "integer", "minimum": 1 }
+          "from": { "type": "integer", "minimum": 0 },
+          "to": { "type": "integer", "minimum": 0 }
         },
         "additionalProperties": false
       }
