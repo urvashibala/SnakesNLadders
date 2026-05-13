@@ -24,6 +24,8 @@ export class GameView {
     this._tokens          = new Map()   // playerId → <img> element
     this._scale           = 1
     this._cameraEnabled   = true
+    this._cameraZone      = null        // 'top' | 'bottom' | 'full' | null
+    this._boardOffset     = null        // {x, y} natural wrap offset inside scroll container
     this._el              = this._buildShell()
   }
 
@@ -148,7 +150,8 @@ export class GameView {
       this._cameraEnabled = !this._cameraEnabled
       this._updateCameraToggle()
       if (this._cameraEnabled && this._engine) {
-        this._cameraPan(this._engine.currentPlayer.position)
+        this._cameraZone = null        // force recheck
+        this._cameraZoneCheck()
       } else {
         this._cameraReset()
       }
@@ -189,8 +192,9 @@ export class GameView {
       isAI:     vsAI && i === 1,
     }))
 
-    this._engine = new GameEngine(this._board, players)
-    this._busy   = false
+    this._engine     = new GameEngine(this._board, players)
+    this._busy       = false
+    this._cameraZone = null
     this._cameraReset(false)
 
     // Build tokens and player cards FIRST so they exist when the image loads
@@ -202,16 +206,14 @@ export class GameView {
 
     // Board image — set src after tokens are in DOM
     const boardImg = this._el.querySelector('#gv-board-img')
-    boardImg.onload = () => {
+    const onBoardReady = () => {
       this._recalcScale()
       this._placeAllTokens()
+      if (this._cameraEnabled) this._cameraZoneCheck(false)
     }
+    boardImg.onload = onBoardReady
     boardImg.src = this._board.imageUrl
-    // Already cached (e.g. coming back from gallery)
-    if (boardImg.complete && boardImg.naturalWidth) {
-      this._recalcScale()
-      this._placeAllTokens()
-    }
+    if (boardImg.complete && boardImg.naturalWidth) onBoardReady()
 
     // Log
     this._clearLog()
@@ -224,8 +226,11 @@ export class GameView {
     // ResizeObserver to keep token positions correct
     if (this._resizeObs) this._resizeObs.disconnect()
     this._resizeObs = new ResizeObserver(() => {
+      this._cameraReset(false)         // clear transform so offset snapshot is accurate
       this._recalcScale()
       this._placeAllTokens()
+      this._cameraZone = null          // force zone recheck at new size
+      if (this._cameraEnabled) this._cameraZoneCheck(false)
     })
     this._resizeObs.observe(boardImg)
 
@@ -238,8 +243,17 @@ export class GameView {
   _recalcScale() {
     const img = this._el.querySelector('#gv-board-img')
     if (!img.naturalWidth) return
-    // img is sized with max-width/max-height; clientWidth = actual rendered width
     this._scale = img.clientWidth / img.naturalWidth
+
+    // Snapshot the wrap's natural position when no transform is active —
+    // used by _cameraZoneCheck so it never needs to temporarily clear the transform
+    const wrapEl = this._el.querySelector('#gv-board-wrap')
+    if (!wrapEl.style.transform || wrapEl.style.transform === 'none') {
+      const scrollEl   = this._el.querySelector('.gv-board-scroll')
+      const sr = scrollEl.getBoundingClientRect()
+      const wr = wrapEl.getBoundingClientRect()
+      this._boardOffset = { x: wr.left - sr.left, y: wr.top - sr.top }
+    }
   }
 
   _screenPos(nativeX, nativeY) {
@@ -339,47 +353,52 @@ export class GameView {
     el.style.borderColor = player.color
   }
 
-  // ── Camera zoom/pan ───────────────────────────────────────────────────────
+  // ── Camera ────────────────────────────────────────────────────────────────
 
-  _cameraFit(fromSqId, toSqId, animated = true) {
-    if (!this._engine) return
+  // Check whether all players are in the same board half and zoom accordingly.
+  // Only moves the camera when the zone actually changes — stays put otherwise.
+  _cameraZoneCheck(animated = true) {
+    if (!this._cameraEnabled || !this._engine || !this._boardOffset) return
+
+    const img = this._el.querySelector('#gv-board-img')
+    const midY = img.clientHeight / 2
+
+    // Convert every player's position to screen coords
+    const ys = this._engine.players.map(p => {
+      const sq = this._engine.squareMap.get(p.position)
+      return sq ? this._screenPos(sq.x, sq.y).y : null
+    }).filter(y => y !== null)
+
+    if (!ys.length) return
+
+    const allBottom = ys.every(y => y >= midY)
+    const allTop    = ys.every(y => y <  midY)
+    const zone      = allBottom ? 'bottom' : allTop ? 'top' : 'full'
+
+    if (zone === this._cameraZone) return   // already showing the right zone
+    this._cameraZone = zone
+
+    if (zone === 'full') {
+      this._cameraReset(animated)
+      return
+    }
+
     const scrollEl = this._el.querySelector('.gv-board-scroll')
     const wrapEl   = this._el.querySelector('#gv-board-wrap')
 
-    const sq1 = this._engine.squareMap.get(fromSqId)
-    const sq2 = this._engine.squareMap.get(toSqId)
-    if (!sq1 || !sq2) return
+    const boardW = img.clientWidth
+    const boardH = img.clientHeight
+    const cx     = boardW / 2
+    const cy     = zone === 'bottom' ? boardH * 3 / 4 : boardH / 4
+    const spanX  = boardW
+    const spanY  = boardH / 2
 
-    const p1 = this._screenPos(sq1.x, sq1.y)
-    const p2 = this._screenPos(sq2.x, sq2.y)
+    const vw   = scrollEl.clientWidth
+    const vh   = scrollEl.clientHeight
+    const zoom = Math.min(vw * 0.92 / spanX, vh * 0.92 / spanY)
 
-    const pad  = TOKEN_PX * 4
-    const minX = Math.min(p1.x, p2.x) - pad
-    const maxX = Math.max(p1.x, p2.x) + pad
-    const minY = Math.min(p1.y, p2.y) - pad
-    const maxY = Math.max(p1.y, p2.y) + pad
-
-    const cx    = (minX + maxX) / 2
-    const cy    = (minY + maxY) / 2
-    const spanX = maxX - minX
-    const spanY = maxY - minY
-
-    const vw = scrollEl.clientWidth
-    const vh = scrollEl.clientHeight
-
-    // Fit bounding box in 80% of viewport; always zoom in (min 1.1×), cap at 2.0×
-    const zoom = Math.max(1.1, Math.min(vw * 0.80 / spanX, vh * 0.80 / spanY, 2.0))
-
-    // Temporarily clear transform to read the natural wrap offset (no paint between)
-    wrapEl.style.transition = 'none'
-    wrapEl.style.transform  = 'none'
-    const scrollRect = scrollEl.getBoundingClientRect()
-    const wrapRect   = wrapEl.getBoundingClientRect()
-    const offsetX    = wrapRect.left - scrollRect.left
-    const offsetY    = wrapRect.top  - scrollRect.top
-
-    const Tx = vw / 2 - offsetX - cx * zoom
-    const Ty = vh / 2 - offsetY - cy * zoom
+    const Tx = vw / 2 - this._boardOffset.x - cx * zoom
+    const Ty = vh / 2 - this._boardOffset.y - cy * zoom
 
     const dur = animated ? 650 : 0
     wrapEl.style.transition      = `transform ${dur}ms cubic-bezier(0.25, 0.1, 0.25, 1)`
@@ -428,16 +447,10 @@ export class GameView {
       return
     }
 
-    // 3. Zoom to frame the move (start → final, including any snake/ladder)
-    if (this._cameraEnabled) {
-      this._cameraFit(player.position, result.finalPos)
-      await delay(400)
-    }
-
-    // 4. Step-by-step walk
+    // 3. Step-by-step walk
     await this._animateSteps(player, result.path)
 
-    // 5. Snake / Ladder
+    // 4. Snake / Ladder
     if (result.transition) {
       const t = result.transition
       const verb = t.type === 'snake' ? '🐍 Snake! Slides down' : '🪜 Ladder! Climbs up'
@@ -445,11 +458,11 @@ export class GameView {
       await this._animateSlide(player, t.from, t.to, t.type)
     }
 
-    // 6. Commit to engine state
+    // 5. Commit to engine state
     this._engine.applyMove(result)
     this._placeAllTokens()
 
-    // 7. Win check — reset camera to show full board, then show win card
+    // 6. Win check — pan out to full board, then show win card
     if (result.won) {
       this._log(`🏆 ${player.name} wins!`)
       await delay(600)
@@ -459,8 +472,9 @@ export class GameView {
       return
     }
 
-    // 8. Advance turn — camera stays where it is until the next player rolls
+    // 7. Advance turn, recheck zone (only moves camera if zone changed)
     this._engine.advanceTurn()
+    this._cameraZoneCheck()
     this._busy = false
     this._updateUI()
     this._scheduleAIIfNeeded()
