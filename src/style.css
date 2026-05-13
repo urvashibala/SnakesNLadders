@@ -676,10 +676,10 @@ body.scroll-hint-left  { cursor: w-resize; }
   height: calc(100vh - 68px);
 }
 
-/* Board scrollable region */
+/* Board region — overflow hidden so camera zoom clips cleanly */
 .gv-board-scroll {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -829,6 +829,23 @@ body.scroll-hint-left  { cursor: w-resize; }
   text-align: center;
   min-height: 18px;
 }
+
+/* ── Camera toggle ─────────────────────────────────────────── */
+.gv-camera-toggle {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 8px 16px 0;
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #666;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.gv-camera-toggle:hover { border-color: #999; color: #333; }
 
 /* ── Game log ──────────────────────────────────────────────── */
 .gv-log-label {

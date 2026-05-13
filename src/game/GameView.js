@@ -9,21 +9,23 @@ const AI_DELAY   = 1100  // ms before AI auto-rolls
 
 const PLAYER_COLORS = ['#c8900a', '#2a6db5', '#2e8b45', '#b53030']
 const PLAYER_NAMES  = ['Player 1', 'Player 2', 'Player 3', 'Player 4']
+const CAMERA_ZOOM   = 1.5   // fixed zoom level when camera is on
 
 const delay = ms => new Promise(r => setTimeout(r, ms))
 
 // ── GameView ───────────────────────────────────────────────────────────────
 export class GameView {
   constructor({ onBackToGallery, tokenUrls }) {
-    this._onBack     = onBackToGallery
-    this._tokenUrls  = tokenUrls
-    this._board      = null
-    this._engine     = null
-    this._animator   = null
-    this._busy       = false       // true while any animation is running
-    this._tokens     = new Map()   // playerId → <img> element
-    this._scale      = 1
-    this._el         = this._buildShell()
+    this._onBack          = onBackToGallery
+    this._tokenUrls       = tokenUrls
+    this._board           = null
+    this._engine          = null
+    this._animator        = null
+    this._busy            = false       // true while any animation is running
+    this._tokens          = new Map()   // playerId → <img> element
+    this._scale           = 1
+    this._cameraEnabled   = true
+    this._el              = this._buildShell()
   }
 
   get element() { return this._el }
@@ -81,6 +83,8 @@ export class GameView {
               <button class="gv-roll-btn" id="gv-roll-btn" disabled>Roll</button>
               <div class="gv-roll-result" id="gv-roll-result"></div>
             </div>
+
+            <button class="gv-camera-toggle" id="gv-camera-toggle">Turn Zoom Off</button>
 
             <div class="gv-log-label">Game log</div>
             <div class="gv-log" id="gv-log"></div>
@@ -140,6 +144,17 @@ export class GameView {
       this._onBack()
     })
 
+    // Camera toggle
+    el.querySelector('#gv-camera-toggle').addEventListener('click', () => {
+      this._cameraEnabled = !this._cameraEnabled
+      this._updateCameraToggle()
+      if (this._cameraEnabled && this._engine) {
+        this._cameraPan(this._engine.currentPlayer.position)
+      } else {
+        this._cameraReset()
+      }
+    })
+
     return el
   }
 
@@ -177,6 +192,7 @@ export class GameView {
 
     this._engine = new GameEngine(this._board, players)
     this._busy   = false
+    this._cameraReset(false)
 
     // Build tokens and player cards FIRST so they exist when the image loads
     this._buildTokens(players)
@@ -190,12 +206,14 @@ export class GameView {
     boardImg.onload = () => {
       this._recalcScale()
       this._placeAllTokens()
+      if (this._cameraEnabled) this._cameraPan(this._board.startSquare, false)
     }
     boardImg.src = this._board.imageUrl
     // Already cached (e.g. coming back from gallery)
     if (boardImg.complete && boardImg.naturalWidth) {
       this._recalcScale()
       this._placeAllTokens()
+      if (this._cameraEnabled) this._cameraPan(this._board.startSquare, false)
     }
 
     // Log
@@ -324,6 +342,48 @@ export class GameView {
     el.style.borderColor = player.color
   }
 
+  // ── Camera pan ────────────────────────────────────────────────────────────
+
+  _cameraPan(sqId, animated = true) {
+    if (!this._engine) return
+    const scrollEl = this._el.querySelector('.gv-board-scroll')
+    const wrapEl   = this._el.querySelector('#gv-board-wrap')
+
+    const sq = this._engine.squareMap.get(sqId)
+    if (!sq) return
+
+    const { x, y } = this._screenPos(sq.x, sq.y)
+
+    const vw = scrollEl.clientWidth
+    const vh = scrollEl.clientHeight
+
+    // Base offset of wrap's top-left within scroll container (unaffected by transform)
+    const offsetX = (vw - wrapEl.offsetWidth)  / 2
+    const offsetY = 20  // scroll container padding-top
+
+    // Translate so the square is centred in the viewport at CAMERA_ZOOM scale
+    const Tx = vw / 2 - offsetX - x * CAMERA_ZOOM
+    const Ty = vh / 2 - offsetY - y * CAMERA_ZOOM
+
+    const dur = animated ? 600 : 0
+    wrapEl.style.transition      = `transform ${dur}ms cubic-bezier(0.25, 0.1, 0.25, 1)`
+    wrapEl.style.transformOrigin = '0 0'
+    wrapEl.style.transform       = `translate(${Tx}px, ${Ty}px) scale(${CAMERA_ZOOM})`
+  }
+
+  _cameraReset(animated = true) {
+    const wrapEl = this._el.querySelector('#gv-board-wrap')
+    const dur    = animated ? 700 : 0
+    wrapEl.style.transition      = `transform ${dur}ms cubic-bezier(0.25, 0.1, 0.25, 1)`
+    wrapEl.style.transformOrigin = '0 0'
+    wrapEl.style.transform       = 'none'
+  }
+
+  _updateCameraToggle() {
+    const btn = this._el.querySelector('#gv-camera-toggle')
+    if (btn) btn.textContent = this._cameraEnabled ? 'Turn Zoom Off' : 'Turn Zoom On'
+  }
+
   // ── Game loop ─────────────────────────────────────────────────────────────
 
   async _handleRoll() {
@@ -346,6 +406,7 @@ export class GameView {
       this._log(`${player.name} cannot move — needs exact roll to reach the end`)
       await delay(400)
       this._engine.advanceTurn()
+      if (this._cameraEnabled) this._cameraPan(this._engine.currentPlayer.position)
       this._busy = false
       this._updateUI()
       this._scheduleAIIfNeeded()
@@ -371,13 +432,15 @@ export class GameView {
     if (result.won) {
       this._log(`🏆 ${player.name} wins!`)
       await delay(600)
+      this._cameraReset()  // pan out to show the full board
       this._showWin(player)
       this._busy = false
       return
     }
 
-    // 7. Advance turn
+    // 7. Advance turn and pan to next player's position
     this._engine.advanceTurn()
+    if (this._cameraEnabled) this._cameraPan(this._engine.currentPlayer.position)
     this._busy = false
     this._updateUI()
     this._scheduleAIIfNeeded()

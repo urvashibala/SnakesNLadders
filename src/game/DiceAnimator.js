@@ -50,9 +50,9 @@ export class DiceAnimator {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   }
 
-  _canPlaceShell(x, y, existingShells) {
+  _canPlaceShell(x, y, existingShells, minDist) {
     for (const [sx, sy] of existingShells) {
-      if (this._calculateDistance(x, y, sx, sy) < MIN_DISTANCE) {
+      if (this._calculateDistance(x, y, sx, sy) < minDist) {
         return false;
       }
     }
@@ -63,12 +63,18 @@ export class DiceAnimator {
     const positions = [];
     for (let i = 0; i < NUM_SHELLS; i++) {
       let placed = false;
+      let attempts = 0;
+      let minDist = MIN_DISTANCE;
       while (!placed) {
         const x = Math.random() * (CANVAS_WIDTH - 2 * MARGIN - 2 * SHELL_RADIUS) + MARGIN + SHELL_RADIUS;
         const y = Math.random() * (CANVAS_HEIGHT - 2 * MARGIN - 2 * SHELL_RADIUS) + MARGIN + SHELL_RADIUS;
-        if (this._canPlaceShell(x, y, positions)) {
+        if (this._canPlaceShell(x, y, positions, minDist)) {
           positions.push([x, y]);
           placed = true;
+        } else {
+          attempts++;
+          // Relax the separation constraint if placement keeps failing
+          if (attempts % 150 === 0) minDist = Math.max(minDist * 0.85, SHELL_RADIUS * 2);
         }
       }
     }
