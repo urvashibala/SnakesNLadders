@@ -59,7 +59,6 @@ At the time of this platform's creation, I have digitised about nine boards by h
 I wanted more people to be able to contribute their boards, but how? The game engine I built requires structured input and some technical know-how on how to write and format JSON data, which would have been a barrier to many amateur archivists. <br><br>
 Our ancient paintings, carvings and games are often very difficult for computers to parse and see, and thus we must be their eyes. <br><br>
 To break this barrier down, I build the Annotation Tool.<br><br>
-> The annotation tool has script options for Tamil, Hindi and English, with plans to expand further.
 >The annotation tool allows a user to click each square from start to finish. Some boards begin at 0, and others at 1. Some end at a nice, even number like 100 and others at 73. There is significance to every decision, and this annotation tool accommodates this.
 >To mark the snakes and ladders, simply follow the direction of the drawings and click where it starts from and where it ends. The annotator tool automatically knows that if the start is less than the end number, it must be a ladder, and vice versa a snake.
 >Before you submit for review, you can view all your grid annotations and snakes and ladders visually.
@@ -70,3 +69,9 @@ Though I initially developed it for my own ease of use, I truly hope that making
 Snakes and ladders, moksha patam, gyan chaupar and other versions of this game are plentiful in their board designs, material decisions, and philosophies, each reflecting their makers' and players' unique cultural contexts. <br><br>
 In opening up this digitisation and archiving process to all users, I hope this platform becomes more and more representative of this game's multide of versions across histories and geographies. <br><br>
 I imagine it's also rather exciting finding a board that you are usually not allowed to physically handle or play with become something you can actively engage with and play games over, and that feeling makes me very proud of this project.
+
+## Future Work
+* Multilingual support for annotation and boardgame view
+* Historical information and insights for each board, dynamically displayed as the user plays
+* More user-uploaded boards!
+* Other ancient game galleries

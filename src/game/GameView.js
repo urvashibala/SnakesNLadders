@@ -49,7 +49,7 @@ export class GameView {
       <header class="game-header">
         <button class="game-back-btn" id="gv-back">← Gallery</button>
         <h1 class="game-board-title" id="gv-title"></h1>
-        <div style="width:100px"></div>
+        <div class="game-header-actions" id="gv-header-actions"></div>
       </header>
 
       <!-- Setup panel (shown first) -->
@@ -108,7 +108,7 @@ export class GameView {
     // Setup: build player count buttons
     const countRow = el.querySelector('#gv-count-row')
     const options = [
-      { label: '1 vs AI', value: '1ai' },
+      { label: '1 vs The King', value: '1ai' },
       { label: '2',       value: 2 },
       { label: '3',       value: 3 },
       { label: '4',       value: 4 },
@@ -168,7 +168,7 @@ export class GameView {
     const shuffled = [...this._tokenUrls].sort(() => Math.random() - 0.5)
     const players = Array.from({ length: numPlayers }, (_, i) => ({
       id:       i,
-      name:     vsAI && i === 1 ? 'AI' : PLAYER_NAMES[i],
+      name:     vsAI && i === 1 ? 'The King' : PLAYER_NAMES[i],
       color:    PLAYER_COLORS[i],
       tokenUrl: shuffled[i % shuffled.length],
       position: this._board.startSquare,
@@ -248,10 +248,9 @@ export class GameView {
         width:${TOKEN_PX}px; height:${TOKEN_PX}px;
         transform:translate(-50%,-50%);
         pointer-events:none;
-        border:3px solid ${player.color};
-        border-radius:50%;
-        background:#fff;
-        padding:2px;
+        border:2px solid ${player.color};
+        border-radius:3px;
+        object-fit:contain;
         box-shadow:0 2px 6px rgba(0,0,0,0.4);
         transition:left ${STEP_MS}ms ease, top ${STEP_MS}ms ease;
         z-index:${10 + player.id};
@@ -431,7 +430,7 @@ export class GameView {
   _setRollEnabled(enabled) {
     const btn = this._el.querySelector('#gv-roll-btn')
     btn.disabled = !enabled
-    btn.textContent = enabled ? 'Roll' : this._engine?.currentPlayer?.isAI ? 'AI rolling…' : 'Roll'
+    btn.textContent = enabled ? 'Roll' : this._engine?.currentPlayer?.isAI ? 'The King is rolling…' : 'Roll'
 
     if (!btn._listenerAdded) {
       btn.addEventListener('click', () => this._handleRoll())

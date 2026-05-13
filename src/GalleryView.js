@@ -60,7 +60,9 @@ export class GalleryView {
     // Restore / set editable title text
     const t = wrapper.querySelector('#gallery-title-text')
     const s = wrapper.querySelector('#gallery-subtitle-text')
-    t.textContent = localStorage.getItem('gallery-title')    ?? 'Snakes & Ladders'
+    // Migrate old title value
+    if (localStorage.getItem('gallery-title') === 'Snakes & Ladders') localStorage.removeItem('gallery-title')
+    t.textContent = localStorage.getItem('gallery-title')    ?? 'Neither Snakes Nor Ladders'
     s.textContent = localStorage.getItem('gallery-subtitle') ?? 'by Urvashi Balasubramaniam'
     t.addEventListener('blur', e => localStorage.setItem('gallery-title',    e.target.textContent.trim()))
     s.addEventListener('blur', e => localStorage.setItem('gallery-subtitle', e.target.textContent.trim()))

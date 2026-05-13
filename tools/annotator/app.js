@@ -1,3 +1,16 @@
+// ── Default credentials (pre-fill on first visit) ─────────────────────────
+;(function seedCredentials() {
+  const defaults = {
+    imgbb_key:    '08a9717d0f278f08f2dcf413be4cac27',
+    ejs_service:  'snakes_and_ladders',
+    ejs_template: 'template_93ufufa',
+    ejs_key:      'tBSb3OERxxfySsy6n',
+  };
+  for (const [k, v] of Object.entries(defaults)) {
+    if (!localStorage.getItem(k)) localStorage.setItem(k, v);
+  }
+})();
+
 // ── State ──────────────────────────────────────────────────────────────────
 let nsfwModel = null;
 let points = [];          // [{id, x, y}]

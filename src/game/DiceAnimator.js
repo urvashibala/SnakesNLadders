@@ -178,7 +178,7 @@ export class DiceAnimator {
           setTimeout(() => {
             this.canvas.remove();
             resolve(score);
-          }, 300);
+          }, 1000);
         }
       };
 

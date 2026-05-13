@@ -61,7 +61,7 @@ body {
   cursor: text;
 }
 .gallery-title:focus { color: #333; }
-.gallery-title:empty::before { content: 'Snakes & Ladders'; opacity: 0.3; }
+.gallery-title:empty::before { content: 'Neither Snakes Nor Ladders'; opacity: 0.3; }
 
 .gallery-subtitle {
   font-size: 0.78rem;
@@ -329,6 +329,190 @@ body.scroll-hint-left  { cursor: w-resize; }
 }
 .btn-begin:hover { background: #333; }
 
+/* ── Music button ──────────────────────────────────────────── */
+.btn-music {
+  font-size: 1rem;
+  padding: 7px 14px 5px;
+  min-width: 42px;
+}
+
+/* ── Game header actions slot ──────────────────────────────── */
+.game-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 130px;
+  flex-shrink: 0;
+}
+
+/* ── About overlay ─────────────────────────────────────────── */
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+.about-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.about-panel {
+  max-width: 720px;
+  width: 100%;
+  max-height: 90vh;
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.about-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 28px 40px 20px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.about-header-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+}
+.about-header-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #888;
+  margin-top: 3px;
+}
+.about-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.about-close:hover { color: #1a1a1a; }
+
+.about-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 40px 36px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #333;
+  scrollbar-width: thin;
+}
+.about-body::-webkit-scrollbar { width: 4px; }
+.about-body::-webkit-scrollbar-thumb { background: #ddd; }
+
+.about-body h2 {
+  font-family: 'Teko', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  margin: 28px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+.about-body h2:first-child { margin-top: 0; }
+.about-body h3 {
+  font-family: 'Teko', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #444;
+  margin: 20px 0 6px;
+}
+.about-body p  { margin: 0 0 12px; }
+.about-body ul { margin: 8px 0 12px 20px; }
+.about-body li { margin-bottom: 4px; }
+.about-body blockquote {
+  margin: 14px 0;
+  padding: 12px 20px;
+  border-left: 3px solid #1a1a1a;
+  background: #fafafa;
+  font-style: italic;
+}
+.about-body blockquote p { margin: 0 0 6px; }
+.about-body blockquote p:last-child { margin: 0; }
+
+/* ── Annotator modal additions ─────────────────────────────── */
+.annotator-modal-panel {
+  max-width: 560px;
+}
+
+.annotator-intro {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #444;
+  margin-bottom: 20px;
+}
+
+.annotator-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ann-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #444;
+}
+
+.ann-step-num {
+  width: 26px;
+  height: 26px;
+  background: #1a1a1a;
+  color: #fff;
+  font-family: 'Teko', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.annotator-note {
+  font-size: 0.82rem;
+  color: #888;
+  font-family: Georgia, serif;
+  font-style: italic;
+  margin-top: 4px;
+}
+
 /* ── Game view (placeholder) ───────────────────────────────── */
 #game-view {
   display: none;
@@ -538,10 +722,8 @@ body.scroll-hint-left  { cursor: w-resize; }
 .gv-pcard-token {
   width: 32px; height: 32px;
   border: 2px solid #ccc;
-  border-radius: 50%;
+  border-radius: 3px;
   object-fit: contain;
-  background: #fff;
-  padding: 2px;
   flex-shrink: 0;
 }
 
