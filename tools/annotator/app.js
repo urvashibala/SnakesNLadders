@@ -60,6 +60,7 @@ const reviewCanvas       = document.getElementById('reviewCanvas');
 const jsonOut            = document.getElementById('jsonOut');
 const copyBtn            = document.getElementById('copyBtn');
 const downloadBtn        = document.getElementById('downloadBtn');
+const imgbbKey           = document.getElementById('imgbbKey');
 const ejsService         = document.getElementById('ejsService');
 const ejsTemplate        = document.getElementById('ejsTemplate');
 const ejsKey             = document.getElementById('ejsKey');
@@ -552,6 +553,7 @@ function buildReview() {
   reviewImg.src = boardImgObjectUrl;
   jsonOut.value = buildJSON();
 
+  imgbbKey.value    = localStorage.getItem('imgbb_key')    || '';
   ejsService.value  = localStorage.getItem('ejs_service')  || '';
   ejsTemplate.value = localStorage.getItem('ejs_template') || '';
   ejsKey.value      = localStorage.getItem('ejs_key')      || '';
@@ -605,6 +607,7 @@ downloadBtn.addEventListener('click', () => {
 });
 
 saveEjsBtn.addEventListener('click', () => {
+  localStorage.setItem('imgbb_key',    imgbbKey.value.trim());
   localStorage.setItem('ejs_service',  ejsService.value.trim());
   localStorage.setItem('ejs_template', ejsTemplate.value.trim());
   localStorage.setItem('ejs_key',      ejsKey.value.trim());
@@ -613,24 +616,39 @@ saveEjsBtn.addEventListener('click', () => {
 });
 
 sendBtn.addEventListener('click', async () => {
-  const svc = ejsService.value.trim()  || localStorage.getItem('ejs_service');
-  const tpl = ejsTemplate.value.trim() || localStorage.getItem('ejs_template');
-  const key = ejsKey.value.trim()      || localStorage.getItem('ejs_key');
+  const imgbb = imgbbKey.value.trim() || localStorage.getItem('imgbb_key');
+  const svc   = ejsService.value.trim()  || localStorage.getItem('ejs_service');
+  const tpl   = ejsTemplate.value.trim() || localStorage.getItem('ejs_template');
+  const key   = ejsKey.value.trim()      || localStorage.getItem('ejs_key');
 
+  if (!imgbb) { showSendStatus('error', 'Enter and save your ImgBB API key first.'); return; }
   if (!svc || !tpl || !key) { showSendStatus('error', 'Enter and save your EmailJS credentials first.'); return; }
 
   sendBtn.disabled = true;
-  showSendStatus('info', 'Preparing submission…');
+
+  // Upload full-quality image to ImgBB
+  let imageUrl = null;
+  if (boardImgFile) {
+    showSendStatus('info', 'Uploading image…');
+    try {
+      imageUrl = await uploadToImgbb(boardImgFile, imgbb);
+    } catch (e) {
+      showSendStatus('error', `Image upload failed: ${e.message}`);
+      sendBtn.disabled = false;
+      return;
+    }
+  }
+
+  showSendStatus('info', 'Sending approval email…');
 
   // Strip pixel x/y coords — approve.html only needs IDs, not canvas positions
-  // previewBase64 is intentionally excluded: embedding it makes the URL 20KB+
-  // which causes email clients to silently drop the link.
   const squaresStripped = points.map(({ id }) => ({ id }));
   const payload = {
     meta:          boardMeta,
     squares:       squaresStripped,
     transitions:   transitions,
     imageFilename: boardImgFile ? boardImgFile.name : '',
+    imageUrl,
   };
 
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
@@ -650,6 +668,18 @@ sendBtn.addEventListener('click', async () => {
     sendBtn.disabled = false;
   }
 });
+
+async function uploadToImgbb(file, apiKey) {
+  const form = new FormData();
+  form.append('key', apiKey);
+  form.append('image', file);
+  const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
+  if (!resp.ok) throw new Error(`ImgBB ${resp.status}`);
+  const data = await resp.json();
+  if (!data.success) throw new Error(data.error?.message || 'ImgBB upload failed');
+  return data.data.url;
+}
+
 
 
 function showSendStatus(type, msg) {

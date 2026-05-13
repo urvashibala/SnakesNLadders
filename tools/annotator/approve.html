@@ -47,13 +47,10 @@
         <h3>JSON that will be committed</h3>
         <pre id="jsonPre"></pre>
 
-        <div class="token-section">
+        <div id="imageSection" class="token-section">
           <h3>Board Image</h3>
-          <p class="muted">Upload the board image file — it will be committed to <code>public/boards/</code>.</p>
-          <div class="token-row">
-            <input id="imageUpload" type="file" accept="image/*" />
-            <span id="imageUploadStatus" class="muted"></span>
-          </div>
+          <p id="imageNote" class="muted">Loading image from ImgBB…</p>
+          <span id="imageUploadStatus" class="muted"></span>
         </div>
 
         <div class="token-section">
@@ -108,30 +105,9 @@
       el.classList.remove('hidden');
     }
 
-    // ── Image handling ─────────────────────────────────────────────────────
-    let uploadedImageBase64 = null;
-
-    function loadPreviewImage(base64, filename) {
-      uploadedImageBase64 = base64;
-      const ext  = (filename || 'img.jpg').split('.').pop().toLowerCase();
-      const mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-      const img  = document.getElementById('previewImg');
-      img.onload = () => requestAnimationFrame(() => drawOverlay(img, payload.squares, payload.transitions));
-      img.src = `data:${mime};base64,${base64}`;
-      document.getElementById('imageUploadStatus').textContent = `✓ ${filename || 'image'} loaded`;
-    }
-
-    document.getElementById('imageUpload').addEventListener('change', (ev) => {
-      const f = ev.target.files && ev.target.files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = e => loadPreviewImage(e.target.result.split(',')[1], f.name);
-      reader.readAsDataURL(f);
-    });
-
     // ── Render board info ──────────────────────────────────────────────────
     function renderBoard() {
-      const { meta, squares, transitions, imageFilename } = payload;
+      const { meta, squares, transitions, imageFilename, imageUrl } = payload;
 
       document.getElementById('boardInfo').classList.remove('hidden');
 
@@ -140,7 +116,7 @@
         ['ID',            meta.id],
         ['Name',          meta.name],
         ['History',       meta.historyText],
-        ['Image URL',     meta.imageUrl],
+        ['Image file',    imageFilename || '—'],
         ['Total Squares', meta.totalSquares],
         ['Start Square',  meta.startSquare],
         ['Win Square',    meta.winSquare],
@@ -158,69 +134,23 @@
         squares, transitions };
       document.getElementById('jsonPre').textContent = JSON.stringify(data, null, 2);
 
-      // Auto-load compressed preview embedded in the payload
-      if (payload.previewBase64) {
-        loadPreviewImage(payload.previewBase64, imageFilename);
+      // Load image from ImgBB URL
+      const noteEl  = document.getElementById('imageNote');
+      const statusEl = document.getElementById('imageUploadStatus');
+      if (imageUrl) {
+        const img = document.getElementById('previewImg');
+        img.crossOrigin = 'anonymous';
+        img.onload  = () => { statusEl.textContent = `✓ Image loaded`; noteEl.classList.add('hidden'); };
+        img.onerror = () => { statusEl.textContent = '⚠ Could not load image preview (CORS) — it will still be committed correctly.'; noteEl.classList.add('hidden'); };
+        img.src = imageUrl;
+        noteEl.textContent = 'Loading image from ImgBB…';
       } else {
-        document.getElementById('imageUploadStatus').textContent =
-          imageFilename ? `Upload the board image (expected: ${imageFilename})` : 'Upload the board image';
+        noteEl.textContent = 'No image was uploaded with this submission.';
       }
 
       // GitHub token
       const savedToken = localStorage.getItem('gh_token_snl');
       if (savedToken) document.getElementById('githubToken').value = savedToken;
-    }
-
-    function drawOverlay(img, squares, transitions) {
-      const canvas = document.getElementById('previewCanvas');
-      const rect   = img.getBoundingClientRect();
-      canvas.width  = rect.width;
-      canvas.height = rect.height;
-      const ctx = canvas.getContext('2d');
-      const sx = rect.width  / img.naturalWidth;
-      const sy = rect.height / img.naturalHeight;
-      const r  = Math.max(10, 14 * Math.min(sx, sy));
-
-      // Transitions
-      for (const t of transitions) {
-        const from = squares.find(p => p.id === t.from);
-        const to   = squares.find(p => p.id === t.to);
-        if (!from || !to) continue;
-        drawArrow(ctx, from.x*sx, from.y*sy, to.x*sx, to.y*sy,
-          t.type === 'snake' ? '#d93030' : '#1a8f1a', r);
-      }
-      // Squares
-      for (const p of squares) {
-        drawMarker(ctx, p.x*sx, p.y*sy, r, p.id);
-      }
-    }
-
-    function drawMarker(ctx, cx, cy, r, label) {
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.fillStyle = 'white'; ctx.fill();
-      ctx.strokeStyle = '#3060e0'; ctx.lineWidth = 2; ctx.stroke();
-      const fs = Math.max(10, Math.round(r * 1.1));
-      ctx.font = `bold ${fs}px Arial`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#111'; ctx.fillText(String(label), cx, cy);
-    }
-
-    function drawArrow(ctx, x1, y1, x2, y2, color, r) {
-      const headLen = Math.max(10, r * 0.8);
-      const angle = Math.atan2(y2-y1, x2-x1);
-      const dist = Math.hypot(x2-x1, y2-y1);
-      const shrink = r * 1.1;
-      if (dist < shrink*2) return;
-      const sx1 = x1+Math.cos(angle)*shrink, sy1 = y1+Math.sin(angle)*shrink;
-      const sx2 = x2-Math.cos(angle)*shrink, sy2 = y2-Math.sin(angle)*shrink;
-      ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2);
-      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(sx2, sy2);
-      ctx.lineTo(sx2 - headLen*Math.cos(angle-Math.PI/6), sy2 - headLen*Math.sin(angle-Math.PI/6));
-      ctx.moveTo(sx2, sy2);
-      ctx.lineTo(sx2 - headLen*Math.cos(angle+Math.PI/6), sy2 - headLen*Math.sin(angle+Math.PI/6));
-      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
     }
 
     // ── Token management ───────────────────────────────────────────────────
@@ -278,7 +208,7 @@
         return;
       }
 
-      const { meta, squares, transitions, imageFilename } = payload;
+      const { meta, squares, transitions } = payload;
       const approveBtn = document.getElementById('approveBtn');
       approveBtn.disabled = true;
       clearLog();
@@ -302,27 +232,50 @@
         return;
       }
 
-      // 2. Commit image to public/boards/ (if uploaded)
-      if (uploadedImageBase64 && imageFilename) {
+      // 2. Commit image to public/boards/ (fetch from ImgBB)
+      const { imageUrl, imageFilename } = payload;
+      if (imageUrl && imageFilename) {
         const imgPath = `public/boards/${imageFilename}`;
-        log(`Uploading ${imgPath}…`);
+        log(`Fetching image from ImgBB…`);
+        let imgBase64;
         try {
-          const existing = await getFileSHA(token, imgPath);
-          await commitFile(token, imgPath, uploadedImageBase64, `Add board image: ${imageFilename}`, existing);
-          log(`✓ Image committed`);
+          imgBase64 = await fetchAsBase64(imageUrl);
         } catch(e) {
-          log(`⚠ Image upload failed (${e.message}) — add it manually to public/boards/`);
-          showUploadStatus('warning', 'JSON uploaded. Image upload failed — add it to public/boards/ manually, then redeploy.');
+          log(`⚠ Could not fetch image (${e.message}) — add it manually to public/boards/`);
+          showUploadStatus('warning', 'JSON uploaded. Image fetch failed — add it to public/boards/ manually.');
           approveBtn.disabled = false;
           return;
         }
-      } else if (!uploadedImageBase64) {
-        log(`⚠ No image uploaded — add it manually to public/boards/ if needed`);
+        log(`Uploading ${imgPath}…`);
+        try {
+          const existing = await getFileSHA(token, imgPath);
+          await commitFile(token, imgPath, imgBase64, `Add board image: ${imageFilename}`, existing);
+          log(`✓ Image committed`);
+        } catch(e) {
+          log(`⚠ Image commit failed (${e.message}) — add it manually to public/boards/`);
+          showUploadStatus('warning', 'JSON uploaded. Image commit failed — add it to public/boards/ manually.');
+          approveBtn.disabled = false;
+          return;
+        }
+      } else {
+        log(`⚠ No image in submission — add it manually to public/boards/ if needed`);
       }
 
       showUploadStatus('ok', `Board "${meta.id}" uploaded! The site will rebuild shortly.`);
       log('Done. GitHub will trigger a site rebuild.');
 
+    }
+
+    async function fetchAsBase64(url) {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
     }
 
     async function getFileSHA(token, path) {
