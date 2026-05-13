@@ -754,8 +754,10 @@ body.scroll-hint-left  { cursor: w-resize; }
 .gv-pcard-token {
   width: 32px; height: 32px;
   border: 2px solid #ccc;
-  border-radius: 3px;
+  border-radius: 50%;
   object-fit: contain;
+  background: #fff;
+  padding: 2px;
   flex-shrink: 0;
 }
 

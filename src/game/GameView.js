@@ -248,9 +248,10 @@ export class GameView {
         width:${TOKEN_PX}px; height:${TOKEN_PX}px;
         transform:translate(-50%,-50%);
         pointer-events:none;
-        border:2px solid ${player.color};
-        border-radius:3px;
-        object-fit:contain;
+        border:3px solid ${player.color};
+        border-radius:50%;
+        background:#fff;
+        padding:2px;
         box-shadow:0 2px 6px rgba(0,0,0,0.4);
         transition:left ${STEP_MS}ms ease, top ${STEP_MS}ms ease;
         z-index:${10 + player.id};
