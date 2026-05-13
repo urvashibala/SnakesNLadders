@@ -1,2 +1,26 @@
+# OS
 .DS_Store
-node_modules
+Thumbs.db
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Vite cache
+.vite/
+
+# Sanity-check output (temporary annotated images, not source)
+sanitycheck_labelledboards/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,709 @@
+/* ============================================================
+   Modern Museum Gallery
+   Font: Teko. Palette: white, black, clean greys.
+   ============================================================ */
+
+@font-face {
+  font-family: 'Teko';
+  src: url('../fonts/Teko/Teko-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Teko', 'Arial', sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+/* ── Gallery shell ─────────────────────────────────────────── */
+#gallery-view {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.gallery-header {
+  flex-shrink: 0;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 52px;
+  background: #fff;
+  border-bottom: 1px solid #e2e0dc;
+  z-index: 10;
+}
+
+.gallery-title-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+}
+
+.gallery-title {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  outline: none;
+  cursor: text;
+}
+.gallery-title:focus { color: #333; }
+.gallery-title:empty::before { content: 'Snakes & Ladders'; opacity: 0.3; }
+
+.gallery-subtitle {
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #888;
+  outline: none;
+  cursor: text;
+  margin-top: 1px;
+}
+.gallery-subtitle:focus { color: #555; }
+.gallery-subtitle:empty::before { content: 'by Urvashi Balasubramaniam'; opacity: 0.3; }
+
+/* ── Header buttons ────────────────────────────────────────── */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-museum {
+  font-family: 'Teko', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 7px 20px 5px;
+  background: transparent;
+  color: #1a1a1a;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+.btn-museum:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+
+/* ── Horizontal gallery canvas ─────────────────────────────── */
+.gallery-canvas {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 80px;
+  gap: 64px;
+  /* hide native scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* room for shadow */
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
+.gallery-canvas::-webkit-scrollbar { display: none; }
+
+/* ── Edge-scroll cursor hints ──────────────────────────────── */
+body.scroll-hint-right { cursor: e-resize; }
+body.scroll-hint-left  { cursor: w-resize; }
+
+/* ── Painting card ─────────────────────────────────────────── */
+.painting-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.3s ease;
+}
+.painting-card:hover { transform: translateY(-6px); }
+
+/* Black textured frame */
+.painting-frame {
+  /* Wood-grain texture via layered gradients on a dark base */
+  background:
+    repeating-linear-gradient(
+      87deg,
+      transparent 0px, transparent 2px,
+      rgba(255,255,255,0.018) 2px, rgba(255,255,255,0.018) 3px,
+      transparent 3px, transparent 8px
+    ),
+    repeating-linear-gradient(
+      3deg,
+      transparent 0px, transparent 5px,
+      rgba(255,255,255,0.010) 5px, rgba(255,255,255,0.010) 6px,
+      transparent 6px, transparent 14px
+    ),
+    linear-gradient(160deg, #2c2c2c 0%, #1a1a1a 40%, #222 70%, #1e1e1e 100%);
+  padding: 18px;
+  /* Bevel-like inner shadow for depth */
+  box-shadow:
+    inset  1px  1px 0 rgba(255,255,255,0.06),
+    inset -1px -1px 0 rgba(0,0,0,0.5),
+    4px 8px 32px rgba(0,0,0,0.22),
+    1px 2px 8px  rgba(0,0,0,0.3);
+  position: relative;
+}
+
+/* thin inner matte – off-white gap between frame and image */
+.painting-matte {
+  background: #f4f3f0;
+  padding: 5px;
+}
+
+.painting-image-wrap {
+  line-height: 0;
+  background: #f0efec;
+  overflow: hidden;
+}
+
+.painting-image {
+  display: block;
+  width: 380px;
+  height: 420px;
+  object-fit: contain;
+  object-position: center center;
+  background: #f8f7f5;
+  transition: opacity 0.3s;
+}
+.painting-card:hover .painting-image { opacity: 0.93; }
+
+/* ── Nameplate ─────────────────────────────────────────────── */
+.painting-nameplate {
+  margin-top: 14px;
+  text-align: center;
+}
+.nameplate-text {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+/* ── Scroll hint overlay ───────────────────────────────────── */
+.scroll-hint {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #bbb;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1s ease;
+  z-index: 50;
+}
+.scroll-hint.hidden { opacity: 0; }
+
+/* ── History modal ─────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+}
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-panel {
+  max-width: 620px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+  transform: translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+  position: relative;
+  scrollbar-width: none;
+}
+.modal-panel::-webkit-scrollbar { display: none; }
+.modal-overlay.visible .modal-panel { transform: translateY(0); }
+
+.modal-close {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #aaa;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: #1a1a1a; }
+
+.modal-header {
+  padding: 32px 40px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-title {
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  line-height: 1.1;
+  padding-right: 32px;
+}
+
+.modal-body {
+  padding: 24px 40px 20px;
+}
+
+.modal-board-thumb {
+  float: right;
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  object-position: center;
+  margin: 0 0 12px 20px;
+  border: 10px solid #1a1a1a;
+  background: #f5f4f0;
+}
+
+.modal-history-text {
+  font-size: 0.97rem;
+  line-height: 1.75;
+  color: #444;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+}
+
+.modal-footer {
+  padding: 20px 40px 28px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
+  clear: both;
+}
+
+.btn-begin {
+  font-family: 'Teko', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 10px 32px 8px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-begin:hover { background: #333; }
+
+/* ── Game view (placeholder) ───────────────────────────────── */
+#game-view {
+  display: none;
+  height: 100vh;
+  flex-direction: column;
+}
+#game-view.active { display: flex; }
+
+.game-header {
+  height: 68px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  border-bottom: 1px solid #e2e0dc;
+  background: #fff;
+  gap: 20px;
+}
+
+.game-back-btn {
+  font-family: 'Teko', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 7px 18px 5px;
+  background: transparent;
+  color: #888;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.game-back-btn:hover { color: #1a1a1a; border-color: #aaa; }
+
+.game-board-title {
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  flex: 1;
+  text-align: center;
+}
+
+/* ============================================================
+   Game View (GameView.js)
+   ============================================================ */
+
+/* ── Setup panel ───────────────────────────────────────────── */
+.gv-setup {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+}
+
+.gv-setup-card {
+  background: #fff;
+  border: 1px solid #e0ddd8;
+  padding: 40px 48px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.gv-setup-heading {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.gv-setup-sub {
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 24px;
+  font-family: 'Teko', sans-serif;
+}
+
+.gv-player-count-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.gv-count-btn {
+  font-family: 'Teko', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 9px 20px 7px;
+  background: transparent;
+  color: #555;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.gv-count-btn:hover    { border-color: #888; color: #1a1a1a; }
+.gv-count-btn.selected { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+.gv-start-btn {
+  font-family: 'Teko', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 12px 40px 10px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+.gv-start-btn:hover { background: #333; }
+
+/* ── Game main area ────────────────────────────────────────── */
+.gv-game-area { overflow: hidden; }
+
+.gv-game-main {
+  display: flex;
+  height: calc(100vh - 68px);
+}
+
+/* Board scrollable region */
+.gv-board-scroll {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  background: #f7f6f4;
+}
+
+/* Board wrap: sized to exactly match the rendered image */
+.gv-board-wrap {
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gv-board-img {
+  display: block;
+  /* Constrain to visible area while preserving aspect ratio */
+  max-height: calc(100vh - 68px - 40px);
+  max-width: calc(100vw - 300px);
+  width: auto;
+  height: auto;
+}
+
+/* Token overlay — exact same dimensions as the image */
+.gv-token-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+.gv-token {
+  position: absolute;
+  object-fit: contain;
+}
+
+/* ── Right sidebar ─────────────────────────────────────────── */
+.gv-sidebar {
+  width: 270px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e2e0dc;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* ── Player cards ──────────────────────────────────────────── */
+.gv-players-panel {
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gv-player-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #eee;
+  border-radius: 2px;
+  background: #fafafa;
+  transition: background 0.2s, border-color 0.2s;
+}
+.gv-player-card.active {
+  background: #fff;
+  border-color: #bbb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.gv-pcard-token {
+  width: 32px; height: 32px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #fff;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.gv-pcard-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.gv-pcard-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gv-pcard-pos {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.gv-pcard-indicator {
+  font-size: 0.7rem;
+  color: #1a1a1a;
+  flex-shrink: 0;
+  width: 12px;
+}
+
+/* ── Dice area ─────────────────────────────────────────────── */
+.gv-dice-area {
+  padding: 20px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  border-top: 1px solid #eee;
+  margin-top: 14px;
+}
+
+.gv-roll-btn {
+  font-family: 'Teko', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 14px 0 12px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+.gv-roll-btn:hover:not(:disabled) { background: #333; }
+.gv-roll-btn:disabled { opacity: 0.38; cursor: default; }
+
+.gv-roll-result {
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #888;
+  text-align: center;
+  min-height: 18px;
+}
+
+/* ── Game log ──────────────────────────────────────────────── */
+.gv-log-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #aaa;
+  padding: 12px 16px 4px;
+  border-top: 1px solid #eee;
+}
+
+.gv-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+}
+.gv-log::-webkit-scrollbar { width: 4px; }
+.gv-log::-webkit-scrollbar-thumb { background: #ddd; }
+
+.gv-log-entry {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #555;
+  padding: 2px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.gv-log-entry:last-child { border-bottom: none; color: #1a1a1a; font-weight: 500; }
+
+/* ── Win overlay ───────────────────────────────────────────── */
+.gv-win-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.gv-win-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+  padding: 48px 56px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+}
+
+.gv-win-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+
+.gv-win-text {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  margin-bottom: 32px;
+  font-family: 'Teko', sans-serif;
+}
+
+.gv-win-play-again,
+.gv-win-gallery {
+  font-family: 'Teko', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 10px 24px 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.gv-win-play-again {
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+}
+.gv-win-play-again:hover { background: #333; }
+
+.gv-win-gallery {
+  background: transparent;
+  color: #888;
+  border: 1px solid #ddd;
+}
+.gv-win-gallery:hover { color: #1a1a1a; border-color: #aaa; }
