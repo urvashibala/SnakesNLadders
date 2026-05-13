@@ -9,7 +9,6 @@ const AI_DELAY   = 1100  // ms before AI auto-rolls
 
 const PLAYER_COLORS = ['#c8900a', '#2a6db5', '#2e8b45', '#b53030']
 const PLAYER_NAMES  = ['Player 1', 'Player 2', 'Player 3', 'Player 4']
-const CAMERA_ZOOM   = 1.5   // fixed zoom level when camera is on
 
 const delay = ms => new Promise(r => setTimeout(r, ms))
 
@@ -206,14 +205,12 @@ export class GameView {
     boardImg.onload = () => {
       this._recalcScale()
       this._placeAllTokens()
-      if (this._cameraEnabled) this._cameraPan(this._board.startSquare, false)
     }
     boardImg.src = this._board.imageUrl
     // Already cached (e.g. coming back from gallery)
     if (boardImg.complete && boardImg.naturalWidth) {
       this._recalcScale()
       this._placeAllTokens()
-      if (this._cameraEnabled) this._cameraPan(this._board.startSquare, false)
     }
 
     // Log
@@ -342,33 +339,52 @@ export class GameView {
     el.style.borderColor = player.color
   }
 
-  // ── Camera pan ────────────────────────────────────────────────────────────
+  // ── Camera zoom/pan ───────────────────────────────────────────────────────
 
-  _cameraPan(sqId, animated = true) {
+  _cameraFit(fromSqId, toSqId, animated = true) {
     if (!this._engine) return
     const scrollEl = this._el.querySelector('.gv-board-scroll')
     const wrapEl   = this._el.querySelector('#gv-board-wrap')
 
-    const sq = this._engine.squareMap.get(sqId)
-    if (!sq) return
+    const sq1 = this._engine.squareMap.get(fromSqId)
+    const sq2 = this._engine.squareMap.get(toSqId)
+    if (!sq1 || !sq2) return
 
-    const { x, y } = this._screenPos(sq.x, sq.y)
+    const p1 = this._screenPos(sq1.x, sq1.y)
+    const p2 = this._screenPos(sq2.x, sq2.y)
+
+    const pad  = TOKEN_PX * 4
+    const minX = Math.min(p1.x, p2.x) - pad
+    const maxX = Math.max(p1.x, p2.x) + pad
+    const minY = Math.min(p1.y, p2.y) - pad
+    const maxY = Math.max(p1.y, p2.y) + pad
+
+    const cx    = (minX + maxX) / 2
+    const cy    = (minY + maxY) / 2
+    const spanX = maxX - minX
+    const spanY = maxY - minY
 
     const vw = scrollEl.clientWidth
     const vh = scrollEl.clientHeight
 
-    // Base offset of wrap's top-left within scroll container (unaffected by transform)
-    const offsetX = (vw - wrapEl.offsetWidth)  / 2
-    const offsetY = 20  // scroll container padding-top
+    // Fit bounding box in 80% of viewport; always zoom in (min 1.1×), cap at 2.0×
+    const zoom = Math.max(1.1, Math.min(vw * 0.80 / spanX, vh * 0.80 / spanY, 2.0))
 
-    // Translate so the square is centred in the viewport at CAMERA_ZOOM scale
-    const Tx = vw / 2 - offsetX - x * CAMERA_ZOOM
-    const Ty = vh / 2 - offsetY - y * CAMERA_ZOOM
+    // Temporarily clear transform to read the natural wrap offset (no paint between)
+    wrapEl.style.transition = 'none'
+    wrapEl.style.transform  = 'none'
+    const scrollRect = scrollEl.getBoundingClientRect()
+    const wrapRect   = wrapEl.getBoundingClientRect()
+    const offsetX    = wrapRect.left - scrollRect.left
+    const offsetY    = wrapRect.top  - scrollRect.top
 
-    const dur = animated ? 600 : 0
+    const Tx = vw / 2 - offsetX - cx * zoom
+    const Ty = vh / 2 - offsetY - cy * zoom
+
+    const dur = animated ? 650 : 0
     wrapEl.style.transition      = `transform ${dur}ms cubic-bezier(0.25, 0.1, 0.25, 1)`
     wrapEl.style.transformOrigin = '0 0'
-    wrapEl.style.transform       = `translate(${Tx}px, ${Ty}px) scale(${CAMERA_ZOOM})`
+    wrapEl.style.transform       = `translate(${Tx}px, ${Ty}px) scale(${zoom})`
   }
 
   _cameraReset(animated = true) {
@@ -406,17 +422,22 @@ export class GameView {
       this._log(`${player.name} cannot move — needs exact roll to reach the end`)
       await delay(400)
       this._engine.advanceTurn()
-      if (this._cameraEnabled) this._cameraPan(this._engine.currentPlayer.position)
       this._busy = false
       this._updateUI()
       this._scheduleAIIfNeeded()
       return
     }
 
-    // 3. Step-by-step walk
+    // 3. Zoom to frame the move (start → final, including any snake/ladder)
+    if (this._cameraEnabled) {
+      this._cameraFit(player.position, result.finalPos)
+      await delay(400)
+    }
+
+    // 4. Step-by-step walk
     await this._animateSteps(player, result.path)
 
-    // 4. Snake / Ladder
+    // 5. Snake / Ladder
     if (result.transition) {
       const t = result.transition
       const verb = t.type === 'snake' ? '🐍 Snake! Slides down' : '🪜 Ladder! Climbs up'
@@ -424,23 +445,22 @@ export class GameView {
       await this._animateSlide(player, t.from, t.to, t.type)
     }
 
-    // 5. Commit to engine state
+    // 6. Commit to engine state
     this._engine.applyMove(result)
     this._placeAllTokens()
 
-    // 6. Win check
+    // 7. Win check — reset camera to show full board, then show win card
     if (result.won) {
       this._log(`🏆 ${player.name} wins!`)
       await delay(600)
-      this._cameraReset()  // pan out to show the full board
+      this._cameraReset()
       this._showWin(player)
       this._busy = false
       return
     }
 
-    // 7. Advance turn and pan to next player's position
+    // 8. Advance turn — camera stays where it is until the next player rolls
     this._engine.advanceTurn()
-    if (this._cameraEnabled) this._cameraPan(this._engine.currentPlayer.position)
     this._busy = false
     this._updateUI()
     this._scheduleAIIfNeeded()
