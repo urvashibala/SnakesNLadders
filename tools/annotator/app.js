@@ -613,80 +613,44 @@ saveEjsBtn.addEventListener('click', () => {
 });
 
 sendBtn.addEventListener('click', async () => {
-  const ghToken = null; // public Gist — no token needed
-  const svc     = ejsService.value.trim()  || localStorage.getItem('ejs_service');
-  const tpl     = ejsTemplate.value.trim() || localStorage.getItem('ejs_template');
-  const key     = ejsKey.value.trim()      || localStorage.getItem('ejs_key');
+  const svc = ejsService.value.trim()  || localStorage.getItem('ejs_service');
+  const tpl = ejsTemplate.value.trim() || localStorage.getItem('ejs_template');
+  const key = ejsKey.value.trim()      || localStorage.getItem('ejs_key');
 
   if (!svc || !tpl || !key) { showSendStatus('error', 'Enter and save your EmailJS credentials first.'); return; }
 
   sendBtn.disabled = true;
-  showSendStatus('info', 'Uploading board data to GitHub…');
+  showSendStatus('info', 'Preparing submission…');
 
+  // Strip pixel x/y coords — approve.html only needs IDs, not canvas positions
+  // previewBase64 is intentionally excluded: embedding it makes the URL 20KB+
+  // which causes email clients to silently drop the link.
+  const squaresStripped = points.map(({ id }) => ({ id }));
   const payload = {
     meta:          boardMeta,
-    squares:       points,
+    squares:       squaresStripped,
     transitions:   transitions,
     imageFilename: boardImgFile ? boardImgFile.name : '',
   };
 
-  let gistId;
-  try {
-    gistId = await createApprovalGist(ghToken, boardMeta.id, payload, boardImgBase64, boardImgFile ? boardImgFile.name : '');
-    showSendStatus('info', 'Gist created — sending email…');
-  } catch(e) {
-    showSendStatus('error', `Failed to create Gist: ${e.message}`);
-    sendBtn.disabled = false;
-    return;
-  }
-
-  const approvalUrl = `${window.location.origin}/tools/annotator/approve.html?gist=${gistId}`;
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const approvalUrl = `${window.location.origin}/tools/annotator/approve.html?data=${encoded}`;
 
   try {
     emailjs.init(key);
     await emailjs.send(svc, tpl, {
-      board_id:     boardMeta.id,
-      board_name:   boardMeta.name,
-      approval_url: approvalUrl,
-      preview_url:  approvalUrl,
+      board_id:    boardMeta.id,
+      board_name:  boardMeta.name,
+      preview_url: approvalUrl,
     });
-    showSendStatus('ok', `Sent! The approval link has been emailed. Gist ID: ${gistId}`);
+    showSendStatus('ok', 'Sent! Check your email for the approval link.');
   } catch (e) {
-    showSendStatus('error', `Gist created (ID: ${gistId}) but email failed: ${e.text || e.message}. Open the approval URL manually.`);
+    showSendStatus('error', `Send failed: ${e.text || e.message || JSON.stringify(e)}`);
   } finally {
     sendBtn.disabled = false;
   }
 });
 
-async function createApprovalGist(token, boardId, payload, imageBase64, imageFilename) {
-  const files = {
-    'payload.json': { content: JSON.stringify(payload, null, 2) },
-  };
-  if (imageBase64 && imageFilename) {
-    files[`image__${imageFilename}.b64`] = { content: imageBase64 };
-  }
-
-  // Attempt authenticated (secret Gist) first, fall back to anonymous (public Gist)
-  const headers = { Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch('https://api.github.com/gists', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      description: `Board annotation pending approval: ${boardId}`,
-      public: !token,   // secret if token provided, public if anonymous
-      files,
-    }),
-  });
-
-  if (!res.ok) {
-    const msg = await res.json().then(d => d.message).catch(() => res.status);
-    throw new Error(`${res.status}: ${msg}`);
-  }
-  const data = await res.json();
-  return data.id;
-}
 
 function showSendStatus(type, msg) {
   sendStatus.className = `send-status ${type}`;

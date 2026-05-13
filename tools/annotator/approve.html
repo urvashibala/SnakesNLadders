@@ -83,63 +83,22 @@
     const GITHUB_BRANCH = 'main';
 
     let payload = null;
-    let gistId  = null;
 
     // ── Load payload from URL ──────────────────────────────────────────────
-    async function init() {
+    function init() {
       const params  = new URLSearchParams(window.location.search);
-      const gist    = params.get('gist');
       const encoded = params.get('data');
-
-      if (gist) {
-        gistId = gist;
-        document.getElementById('loadingMsg').textContent = 'Fetching board data from GitHub…';
-        try {
-          await loadFromGist(gist);
-        } catch(e) {
-          showError(`Could not load board from Gist: ${e.message}`);
-        }
-      } else if (encoded) {
-        try {
-          payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
-          document.getElementById('loadingMsg').classList.add('hidden');
-          renderBoard();
-        } catch {
-          showError('Could not decode board data. The link may be corrupted.');
-        }
-      } else {
+      if (!encoded) {
         showError('No board data found in URL. Open this page from the approval email link.');
+        return;
       }
-    }
-
-    async function loadFromGist(id) {
-      const res = await fetch(`https://api.github.com/gists/${id}`, {
-        headers: { Accept: 'application/vnd.github+json' }
-      });
-      if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
-      const gist = await res.json();
-
-      // Parse payload.json
-      const payloadFile = gist.files['payload.json'];
-      if (!payloadFile) throw new Error('payload.json not found in Gist');
-      const content = payloadFile.truncated
-        ? await fetch(payloadFile.raw_url).then(r => r.text())
-        : payloadFile.content;
-      payload = JSON.parse(content);
-
-      // Load image if present
-      const imgFileKey = Object.keys(gist.files).find(k => k.startsWith('image__'));
-      if (imgFileKey) {
-        const imgFile = gist.files[imgFileKey];
-        const b64 = imgFile.truncated
-          ? await fetch(imgFile.raw_url).then(r => r.text())
-          : imgFile.content;
-        const filename = imgFileKey.replace(/^image__/, '').replace(/\.b64$/, '');
-        loadPreviewImage(b64.trim(), filename);
+      try {
+        payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+        document.getElementById('loadingMsg').classList.add('hidden');
+        renderBoard();
+      } catch {
+        showError('Could not decode board data. The link may be corrupted.');
       }
-
-      document.getElementById('loadingMsg').classList.add('hidden');
-      renderBoard();
     }
 
     function showError(msg) {
@@ -199,11 +158,9 @@
         squares, transitions };
       document.getElementById('jsonPre').textContent = JSON.stringify(data, null, 2);
 
-      // Auto-load image from localStorage if annotated on same device
-      const storedImg  = localStorage.getItem(`snl_img_${meta.id}`);
-      const storedName = localStorage.getItem(`snl_imgname_${meta.id}`) || imageFilename;
-      if (storedImg) {
-        loadPreviewImage(storedImg, storedName);
+      // Auto-load compressed preview embedded in the payload
+      if (payload.previewBase64) {
+        loadPreviewImage(payload.previewBase64, imageFilename);
       } else {
         document.getElementById('imageUploadStatus').textContent =
           imageFilename ? `Upload the board image (expected: ${imageFilename})` : 'Upload the board image';
@@ -366,16 +323,6 @@
       showUploadStatus('ok', `Board "${meta.id}" uploaded! The site will rebuild shortly.`);
       log('Done. GitHub will trigger a site rebuild.');
 
-      // Clean up the Gist now that files are committed
-      if (gistId) {
-        try {
-          await fetch(`https://api.github.com/gists/${gistId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
-          });
-          log('✓ Approval Gist deleted');
-        } catch { log('Note: could not delete Gist — remove it manually if you like'); }
-      }
     }
 
     async function getFileSHA(token, path) {
