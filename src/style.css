@@ -460,6 +460,38 @@ body.scroll-hint-left  { cursor: w-resize; }
 .about-body blockquote p { margin: 0 0 6px; }
 .about-body blockquote p:last-child { margin: 0; }
 
+/* ── References view ───────────────────────────────────────── */
+.refs-section { margin-bottom: 28px; }
+.refs-section h2 { margin-top: 0; }
+
+.ref-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ref-item:last-child { border-bottom: none; }
+
+.ref-title {
+  display: block;
+  font-family: 'Teko', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: #1a1a1a;
+  text-decoration: none;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  transition: color 0.15s;
+}
+.ref-title:hover { color: #555; text-decoration: underline; }
+
+.ref-desc {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
+}
+
 /* ── Annotator modal additions ─────────────────────────────── */
 .annotator-modal-panel {
   max-width: 560px;

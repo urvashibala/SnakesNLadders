@@ -5,11 +5,10 @@ const boardModules = import.meta.glob('./boards/data_*.json', { eager: true, imp
 
 function normalizeImageUrl(url) {
   if (!url) return url
-  // Ensure leading slash for public-folder paths
-  if (!url.startsWith('/') && !url.startsWith('http')) {
-    return '/' + url
-  }
-  return url
+  if (url.startsWith('http')) return url
+  // Strip leading slash then prepend Vite base (handles both dev '/' and '/SnakesNLadders/')
+  const path = url.startsWith('/') ? url.slice(1) : url
+  return import.meta.env.BASE_URL + path
 }
 
 export const boards = Object.values(boardModules).map(board => ({

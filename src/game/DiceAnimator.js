@@ -28,8 +28,8 @@ export class DiceAnimator {
     if (this.imagesLoaded) return;
 
     return Promise.all([
-      this._loadImage('/cowrieup.png'),
-      this._loadImage('/cowriedown.png')
+      this._loadImage(import.meta.env.BASE_URL + 'cowrieup.png'),
+      this._loadImage(import.meta.env.BASE_URL + 'cowriedown.png'),
     ]).then(([up, down]) => {
       this.cowrieUpImg = up;
       this.cowrieDownImg = down;

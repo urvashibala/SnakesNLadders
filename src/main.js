@@ -5,6 +5,7 @@ import { HistoryModal }   from './HistoryModal.js'
 import { GameView }       from './game/GameView.js'
 import { AboutView }      from './AboutView.js'
 import { AnnotatorModal } from './AnnotatorModal.js'
+import { ReferencesView } from './ReferencesView.js'
 
 const app = document.getElementById('app')
 
@@ -24,6 +25,7 @@ app.appendChild(galleryView.element)
 const historyModal   = new HistoryModal((board) => openGame(board))
 const aboutView      = new AboutView()
 const annotatorModal = new AnnotatorModal()
+const refsView       = new ReferencesView()
 
 // ── Navigation ─────────────────────────────────────────────────────────────
 function showGallery() {
@@ -48,6 +50,7 @@ function makeNavBtn(label, title, onClick) {
 
 // Gallery header buttons
 const galleryActions = galleryView.element.querySelector('.header-actions')
+galleryActions.prepend(makeNavBtn('References', 'Sources & attributions', () => refsView.show()))
 galleryActions.prepend(makeNavBtn('About', 'About this project', () => aboutView.show()))
 galleryActions.prepend(makeNavBtn('Contribute', 'Contribute a board via the Annotator Tool', () => annotatorModal.show()))
 

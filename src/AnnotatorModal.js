@@ -62,7 +62,7 @@ export class AnnotatorModal {
           </p>
         </div>
         <div class="modal-footer">
-          <a class="btn-begin" href="/tools/annotator/index.html" target="_blank" rel="noopener">
+          <a class="btn-begin" href="${import.meta.env.BASE_URL}tools/annotator/index.html" target="_blank" rel="noopener">
             Open Annotator Tool →
           </a>
         </div>

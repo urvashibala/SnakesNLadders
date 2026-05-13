@@ -665,7 +665,7 @@ sendBtn.addEventListener('click', async () => {
   };
 
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  const approvalUrl = `${window.location.origin}/tools/annotator/approve.html?data=${encoded}`;
+  const approvalUrl = new URL('approve.html?data=' + encoded, window.location.href).href;
 
   try {
     emailjs.init(key);
