@@ -3,49 +3,196 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Image Annotator</title>
+    <title>Board Annotator</title>
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
     <div class="container">
-      <h1>Image Annotator</h1>
+      <h1>Board Annotator</h1>
 
-      <div class="controls">
-        <label>Image URL (or leave blank to use default):</label>
-        <input id="imgUrl" type="text" placeholder="/public/boards/Gyan_Chaupar_National_Museum_India.JPG" />
-        <label>Start index:</label>
-        <label><input type="radio" name="start" value="1" checked /> Start at 1</label>
-        <label><input type="radio" name="start" value="0" /> Start at 0</label>
-        <button id="loadBtn">Load Image</button>
-        <input id="fileInput" type="file" accept="image/*" />
+      <!-- Step indicator -->
+      <div class="steps" id="stepIndicator">
+        <span class="step active" data-step="1">1. Load Image</span>
+        <span class="step-sep">›</span>
+        <span class="step" data-step="2">2. Mark Squares</span>
+        <span class="step-sep">›</span>
+        <span class="step" data-step="3">3. Snakes &amp; Ladders</span>
+        <span class="step-sep">›</span>
+        <span class="step" data-step="4">4. Board Details</span>
+        <span class="step-sep">›</span>
+        <span class="step" data-step="5">5. Review & Send</span>
       </div>
 
-      <div id="viewer" class="viewer">
-        <div id="coordsInfo" class="coordsInfo">Image not loaded</div>
+      <!-- ── STEP 1: Load Image ── -->
+      <section id="step1" class="step-panel">
+        <h2>Step 1: Load Board Image</h2>
+        <div class="controls">
+          <label>Upload image file:</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div id="nsfwStatus" class="nsfw-status hidden"></div>
+        </div>
+        <div id="nsfwLoading" class="muted">Loading image safety checker…</div>
+      </section>
+
+      <!-- ── STEP 2 & 3: Image Viewer (shared) ── -->
+      <section id="stepViewer" class="step-panel hidden">
+        <!-- Start-index control — only visible in step 2 -->
+        <div id="startChoiceRow" class="start-choice-row">
+          <span class="start-choice-label">First square number:</span>
+          <label><input type="radio" name="start" value="0" checked /> Start at 0</label>
+          <label><input type="radio" name="start" value="1" /> Start at 1</label>
+          <span class="muted" id="startChangeWarning"></span>
+        </div>
+        <div id="coordsInfo" class="coordsInfo"></div>
+        <div id="modeBar" class="mode-bar hidden">
+          <span id="modeLabel"></span>
+        </div>
         <div id="imageWrap" class="imageWrap">
           <img id="boardImg" alt="board" crossorigin="anonymous">
           <canvas id="overlay"></canvas>
         </div>
-      </div>
 
-      <div class="actions">
-        <button id="undoBtn">Undo</button>
-        <button id="clearBtn">Clear</button>
-        <button id="doneBtn">Done (show JSON)</button>
-      </div>
+        <!-- Step 2 actions -->
+        <div id="step2Actions" class="actions">
+          <button id="backToStep1Btn">← Back</button>
+          <button id="undoBtn">Undo Last</button>
+          <button id="clearBtn">Clear All</button>
+          <button id="toStep3Btn" class="primary">Next: Add Snakes &amp; Ladders →</button>
+        </div>
 
-      <div class="list">
-        <h2>Recorded Points</h2>
+        <!-- Step 3 actions -->
+        <div id="step3Actions" class="actions hidden">
+          <div class="transition-inputs">
+            <label>Or type squares:</label>
+            <input id="fromInput" type="number" placeholder="From" min="0" />
+            <span>→</span>
+            <input id="toInput" type="number" placeholder="To" min="0" />
+            <button id="addTransitionBtn">Add</button>
+            <button id="undoTransitionBtn">Undo Last</button>
+            <button id="clearTransitionsBtn">Clear All</button>
+          </div>
+          <div class="step3-nav">
+            <button id="backToStep2Btn">← Back to Squares</button>
+            <button id="toStep4Btn" class="primary">Next: Board Details →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Points list (visible in step 2) -->
+      <div id="pointsSection" class="list hidden">
+        <h2>Recorded Squares (<span id="pointCount">0</span>)</h2>
         <ol id="pointsList"></ol>
       </div>
 
-      <div id="output" class="output" hidden>
-        <h3>Exported JSON</h3>
-        <textarea id="jsonOut" rows="10"></textarea>
-        <div class="outActions"><button id="copyBtn">Copy to Clipboard</button><button id="closeOut">Close</button></div>
+      <!-- Transitions list (visible in step 3) -->
+      <div id="transitionsSection" class="list hidden">
+        <h2>Transitions (<span id="transitionCount">0</span>)</h2>
+        <ul id="transitionsList"></ul>
       </div>
+
+      <!-- ── STEP 4: Board Details ── -->
+      <section id="step4" class="step-panel hidden">
+        <h2>Step 4: Board Details</h2>
+        <form id="metaForm" novalidate>
+          <div class="field">
+            <label>Board ID <span class="hint">(letters, numbers, underscores only — no spaces)</span></label>
+            <input id="fieldId" type="text" pattern="^[A-Za-z0-9_]+$" required placeholder="e.g. my_board_1800" />
+            <span class="field-err" id="errId"></span>
+          </div>
+          <div class="field">
+            <label>Display Name</label>
+            <input id="fieldName" type="text" required placeholder="e.g. My Historic Board" />
+            <span class="field-err" id="errName"></span>
+          </div>
+          <div class="field">
+            <label>History Text <span class="hint">(max 50 words — date, medium, significance. Include property rights and board ownership details.)</span></label>
+            <textarea id="fieldHistory" rows="4" required placeholder="A 19th century Indian board painted on cloth in gouache held in the British Libary's collection…"></textarea>
+            <div class="word-count"><span id="wordCount">0</span>/50 words</div>
+            <span class="field-err" id="errHistory"></span>
+          </div>
+          <div class="field">
+            <label>Board Image Filename <span class="hint">(will be saved as /boards/{filename})</span></label>
+            <input id="fieldImageFilename" type="text" required placeholder="e.g. my_board.jpg" />
+            <span class="field-err" id="errImage"></span>
+          </div>
+          <div class="field">
+            <label>Total Squares <span class="hint">(auto-filled from marked squares)</span></label>
+            <input id="fieldTotal" type="number" required min="2" />
+            <span class="field-err" id="errTotal"></span>
+          </div>
+          <div class="field">
+            <label>Start Square</label>
+            <label><input type="radio" name="startSq" value="0" /> 0</label>
+            <label><input type="radio" name="startSq" value="1" /> 1</label>
+            <span class="field-err" id="errStart"></span>
+          </div>
+          <div class="field">
+            <label>Win Square <span class="hint">(auto-filled from last marked square)</span></label>
+            <input id="fieldWin" type="number" required min="1" />
+            <span class="field-err" id="errWin"></span>
+          </div>
+          <div class="field-err" id="errConsistency"></div>
+          <div class="form-actions">
+            <button type="button" id="backToStep3Btn">← Back</button>
+            <button type="submit" class="primary">Review →</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ── STEP 5: Review & Send ── -->
+      <section id="step5" class="step-panel hidden">
+        <h2>Step 5: Review &amp; Send</h2>
+        <div class="review-layout">
+          <div class="review-meta">
+            <table id="reviewTable" class="review-table"></table>
+          </div>
+          <div class="review-board">
+            <p class="muted">Board preview with all squares and transitions:</p>
+            <div id="reviewWrap" class="imageWrap">
+              <img id="reviewImg" alt="review board">
+              <canvas id="reviewCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-json">
+          <h3>Generated JSON</h3>
+          <textarea id="jsonOut" rows="14" readonly></textarea>
+          <div class="outActions">
+            <button id="copyBtn">Copy JSON</button>
+            <button id="downloadBtn">Download JSON</button>
+          </div>
+        </div>
+
+        <div class="email-section">
+          <h3>Send for Approval</h3>
+          <p class="muted">Uploads the board data (including image) to a public GitHub Gist, then emails the curator an approval link.</p>
+          <div class="email-config">
+            <label>EmailJS Service ID</label>
+            <input id="ejsService" type="text" placeholder="service_xxxxxxx" />
+            <label>EmailJS Template ID</label>
+            <input id="ejsTemplate" type="text" placeholder="template_xxxxxxx" />
+            <label>EmailJS Public Key</label>
+            <input id="ejsKey" type="text" placeholder="public key" />
+            <button id="saveEjsBtn">Save credentials</button>
+          </div>
+          <button id="sendBtn" class="primary">Send for Approval</button>
+          <div id="sendStatus" class="send-status hidden"></div>
+        </div>
+
+        <div class="form-actions">
+          <button id="backToStep4Btn">← Edit Details</button>
+        </div>
+      </section>
     </div>
 
+    <!-- Toast notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- NSFW.js (TensorFlow.js based) -->
+    <script src="https://cdn.jsdelivr.net/npm/nsfwjs@4/dist/nsfwjs.min.js"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

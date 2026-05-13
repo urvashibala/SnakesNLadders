@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Board Approval</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+      .approve-wrap { max-width: 860px; margin: 0 auto; padding: 20px; }
+      .board-preview { display: flex; gap: 24px; flex-wrap: wrap; margin: 16px 0; }
+      .board-preview .review-meta { flex: 1; min-width: 260px; }
+      .board-preview .preview-img-wrap { flex: 2; min-width: 300px; position: relative; display: inline-block; }
+      .preview-img-wrap img { max-width: 100%; display: block; }
+      .preview-img-wrap canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
+      .token-section { margin-top: 20px; padding: 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; }
+      .token-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+      .token-row input { flex: 1; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; max-width: 400px; }
+      .upload-status { margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
+      .upload-status.info    { background: #eff6ff; color: #1d4ed8; }
+      .upload-status.ok      { background: #dcfce7; color: #16a34a; }
+      .upload-status.error   { background: #fee2e2; color: #dc2626; }
+      .upload-status.warning { background: #fef3c7; color: #d97706; }
+      pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.78rem; overflow: auto; max-height: 260px; }
+      .actions-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+      .step-log { margin-top: 10px; font-size: 0.82rem; color: #475569; }
+      .step-log div { padding: 2px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="approve-wrap">
+      <h1>Board Approval</h1>
+      <div id="loadingMsg" class="muted">Loading board data…</div>
+      <div id="errorMsg" class="upload-status error hidden"></div>
+
+      <!-- Board info -->
+      <div id="boardInfo" class="hidden">
+        <div class="board-preview">
+          <div class="review-meta">
+            <table id="reviewTable" class="review-table"></table>
+          </div>
+          <div class="preview-img-wrap" id="previewWrap">
+            <img id="previewImg" alt="board preview" />
+            <canvas id="previewCanvas"></canvas>
+          </div>
+        </div>
+
+        <h3>JSON that will be committed</h3>
+        <pre id="jsonPre"></pre>
+
+        <div class="token-section">
+          <h3>Board Image</h3>
+          <p class="muted">Upload the board image file — it will be committed to <code>public/boards/</code>.</p>
+          <div class="token-row">
+            <input id="imageUpload" type="file" accept="image/*" />
+            <span id="imageUploadStatus" class="muted"></span>
+          </div>
+        </div>
+
+        <div class="token-section">
+          <h3>GitHub Authentication</h3>
+          <p class="muted">Enter a GitHub Personal Access Token with <code>Contents: write</code> permission for the <code>urvashibala/SnakesNLadders</code> repo. The token is stored locally and never sent anywhere except the GitHub API.</p>
+          <div class="token-row">
+            <input id="githubToken" type="password" placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx" />
+            <button id="saveTokenBtn">Save token</button>
+            <button id="testTokenBtn">Test connection</button>
+          </div>
+          <div id="tokenStatus" class="upload-status hidden" style="margin-top:6px"></div>
+        </div>
+
+        <div class="actions-row">
+          <button id="approveBtn" class="primary">✓ Approve &amp; Upload to Site</button>
+          <button id="rejectBtn">✗ Reject (download only)</button>
+        </div>
+
+        <div id="uploadStatus" class="upload-status hidden"></div>
+        <div id="stepLog" class="step-log"></div>
+      </div>
+    </div>
+
+    <script>
+    const GITHUB_OWNER  = 'urvashibala';
+    const GITHUB_REPO   = 'SnakesNLadders';
+    const GITHUB_BRANCH = 'main';
+
+    let payload = null;
+    let gistId  = null;
+
+    // ── Load payload from URL ──────────────────────────────────────────────
+    async function init() {
+      const params  = new URLSearchParams(window.location.search);
+      const gist    = params.get('gist');
+      const encoded = params.get('data');
+
+      if (gist) {
+        gistId = gist;
+        document.getElementById('loadingMsg').textContent = 'Fetching board data from GitHub…';
+        try {
+          await loadFromGist(gist);
+        } catch(e) {
+          showError(`Could not load board from Gist: ${e.message}`);
+        }
+      } else if (encoded) {
+        try {
+          payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+          document.getElementById('loadingMsg').classList.add('hidden');
+          renderBoard();
+        } catch {
+          showError('Could not decode board data. The link may be corrupted.');
+        }
+      } else {
+        showError('No board data found in URL. Open this page from the approval email link.');
+      }
+    }
+
+    async function loadFromGist(id) {
+      const res = await fetch(`https://api.github.com/gists/${id}`, {
+        headers: { Accept: 'application/vnd.github+json' }
+      });
+      if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
+      const gist = await res.json();
+
+      // Parse payload.json
+      const payloadFile = gist.files['payload.json'];
+      if (!payloadFile) throw new Error('payload.json not found in Gist');
+      const content = payloadFile.truncated
+        ? await fetch(payloadFile.raw_url).then(r => r.text())
+        : payloadFile.content;
+      payload = JSON.parse(content);
+
+      // Load image if present
+      const imgFileKey = Object.keys(gist.files).find(k => k.startsWith('image__'));
+      if (imgFileKey) {
+        const imgFile = gist.files[imgFileKey];
+        const b64 = imgFile.truncated
+          ? await fetch(imgFile.raw_url).then(r => r.text())
+          : imgFile.content;
+        const filename = imgFileKey.replace(/^image__/, '').replace(/\.b64$/, '');
+        loadPreviewImage(b64.trim(), filename);
+      }
+
+      document.getElementById('loadingMsg').classList.add('hidden');
+      renderBoard();
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingMsg').classList.add('hidden');
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // ── Image handling ─────────────────────────────────────────────────────
+    let uploadedImageBase64 = null;
+
+    function loadPreviewImage(base64, filename) {
+      uploadedImageBase64 = base64;
+      const ext  = (filename || 'img.jpg').split('.').pop().toLowerCase();
+      const mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+      const img  = document.getElementById('previewImg');
+      img.onload = () => requestAnimationFrame(() => drawOverlay(img, payload.squares, payload.transitions));
+      img.src = `data:${mime};base64,${base64}`;
+      document.getElementById('imageUploadStatus').textContent = `✓ ${filename || 'image'} loaded`;
+    }
+
+    document.getElementById('imageUpload').addEventListener('change', (ev) => {
+      const f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = e => loadPreviewImage(e.target.result.split(',')[1], f.name);
+      reader.readAsDataURL(f);
+    });
+
+    // ── Render board info ──────────────────────────────────────────────────
+    function renderBoard() {
+      const { meta, squares, transitions, imageFilename } = payload;
+
+      document.getElementById('boardInfo').classList.remove('hidden');
+
+      // Table
+      const rows = [
+        ['ID',            meta.id],
+        ['Name',          meta.name],
+        ['History',       meta.historyText],
+        ['Image URL',     meta.imageUrl],
+        ['Total Squares', meta.totalSquares],
+        ['Start Square',  meta.startSquare],
+        ['Win Square',    meta.winSquare],
+        ['Squares',       squares.length],
+        ['Transitions',   `${transitions.length} (${transitions.filter(t=>t.type==='snake').length} snakes, ${transitions.filter(t=>t.type==='ladder').length} ladders)`],
+      ];
+      document.getElementById('reviewTable').innerHTML = rows.map(([k,v]) =>
+        `<tr><th>${k}</th><td>${v}</td></tr>`
+      ).join('');
+
+      // JSON
+      const data = { id: meta.id, name: meta.name, historyText: meta.historyText,
+        imageUrl: meta.imageUrl, totalSquares: meta.totalSquares,
+        startSquare: meta.startSquare, winSquare: meta.winSquare,
+        squares, transitions };
+      document.getElementById('jsonPre').textContent = JSON.stringify(data, null, 2);
+
+      // Auto-load image from localStorage if annotated on same device
+      const storedImg  = localStorage.getItem(`snl_img_${meta.id}`);
+      const storedName = localStorage.getItem(`snl_imgname_${meta.id}`) || imageFilename;
+      if (storedImg) {
+        loadPreviewImage(storedImg, storedName);
+      } else {
+        document.getElementById('imageUploadStatus').textContent =
+          imageFilename ? `Upload the board image (expected: ${imageFilename})` : 'Upload the board image';
+      }
+
+      // GitHub token
+      const savedToken = localStorage.getItem('gh_token_snl');
+      if (savedToken) document.getElementById('githubToken').value = savedToken;
+    }
+
+    function drawOverlay(img, squares, transitions) {
+      const canvas = document.getElementById('previewCanvas');
+      const rect   = img.getBoundingClientRect();
+      canvas.width  = rect.width;
+      canvas.height = rect.height;
+      const ctx = canvas.getContext('2d');
+      const sx = rect.width  / img.naturalWidth;
+      const sy = rect.height / img.naturalHeight;
+      const r  = Math.max(10, 14 * Math.min(sx, sy));
+
+      // Transitions
+      for (const t of transitions) {
+        const from = squares.find(p => p.id === t.from);
+        const to   = squares.find(p => p.id === t.to);
+        if (!from || !to) continue;
+        drawArrow(ctx, from.x*sx, from.y*sy, to.x*sx, to.y*sy,
+          t.type === 'snake' ? '#d93030' : '#1a8f1a', r);
+      }
+      // Squares
+      for (const p of squares) {
+        drawMarker(ctx, p.x*sx, p.y*sy, r, p.id);
+      }
+    }
+
+    function drawMarker(ctx, cx, cy, r, label) {
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fillStyle = 'white'; ctx.fill();
+      ctx.strokeStyle = '#3060e0'; ctx.lineWidth = 2; ctx.stroke();
+      const fs = Math.max(10, Math.round(r * 1.1));
+      ctx.font = `bold ${fs}px Arial`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#111'; ctx.fillText(String(label), cx, cy);
+    }
+
+    function drawArrow(ctx, x1, y1, x2, y2, color, r) {
+      const headLen = Math.max(10, r * 0.8);
+      const angle = Math.atan2(y2-y1, x2-x1);
+      const dist = Math.hypot(x2-x1, y2-y1);
+      const shrink = r * 1.1;
+      if (dist < shrink*2) return;
+      const sx1 = x1+Math.cos(angle)*shrink, sy1 = y1+Math.sin(angle)*shrink;
+      const sx2 = x2-Math.cos(angle)*shrink, sy2 = y2-Math.sin(angle)*shrink;
+      ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx2, sy2);
+      ctx.lineTo(sx2 - headLen*Math.cos(angle-Math.PI/6), sy2 - headLen*Math.sin(angle-Math.PI/6));
+      ctx.moveTo(sx2, sy2);
+      ctx.lineTo(sx2 - headLen*Math.cos(angle+Math.PI/6), sy2 - headLen*Math.sin(angle+Math.PI/6));
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+    }
+
+    // ── Token management ───────────────────────────────────────────────────
+    document.getElementById('saveTokenBtn').addEventListener('click', () => {
+      const t = document.getElementById('githubToken').value.trim();
+      localStorage.setItem('gh_token_snl', t);
+      document.getElementById('saveTokenBtn').textContent = 'Saved ✓';
+      setTimeout(() => { document.getElementById('saveTokenBtn').textContent = 'Save token'; }, 2000);
+    });
+
+    document.getElementById('testTokenBtn').addEventListener('click', async () => {
+      const token = document.getElementById('githubToken').value.trim() || localStorage.getItem('gh_token_snl');
+      const el = document.getElementById('tokenStatus');
+      if (!token) { el.className = 'upload-status error'; el.textContent = 'Enter a token first.'; el.classList.remove('hidden'); return; }
+      el.className = 'upload-status info'; el.textContent = 'Testing…'; el.classList.remove('hidden');
+      try {
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+        });
+        if (res.ok) {
+          el.className = 'upload-status ok';
+          el.textContent = '✓ Token works — repo access confirmed';
+        } else {
+          const msg = await res.json().then(d => d.message).catch(() => res.status);
+          el.className = 'upload-status error';
+          el.textContent = `✗ ${res.status}: ${msg}. Check token permissions (Contents: write) and that it hasn't expired.`;
+        }
+      } catch(e) {
+        el.className = 'upload-status error';
+        el.textContent = `Network error: ${e.message}`;
+      }
+    });
+
+    // ── Reject ─────────────────────────────────────────────────────────────
+    document.getElementById('rejectBtn').addEventListener('click', () => {
+      const { meta, squares, transitions } = payload;
+      const data = { id: meta.id, name: meta.name, historyText: meta.historyText,
+        imageUrl: meta.imageUrl, totalSquares: meta.totalSquares,
+        startSquare: meta.startSquare, winSquare: meta.winSquare,
+        squares, transitions };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `data_${meta.id}.json`; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ── Approve & Upload ───────────────────────────────────────────────────
+    document.getElementById('approveBtn').addEventListener('click', () => uploadBoard());
+
+    async function uploadBoard() {
+      const token = document.getElementById('githubToken').value.trim()
+                    || localStorage.getItem('gh_token_snl');
+      if (!token) {
+        showUploadStatus('error', 'Enter your GitHub token first.');
+        return;
+      }
+
+      const { meta, squares, transitions, imageFilename } = payload;
+      const approveBtn = document.getElementById('approveBtn');
+      approveBtn.disabled = true;
+      clearLog();
+
+      const data = { id: meta.id, name: meta.name, historyText: meta.historyText,
+        imageUrl: meta.imageUrl, totalSquares: meta.totalSquares,
+        startSquare: meta.startSquare, winSquare: meta.winSquare,
+        squares, transitions };
+      const jsonContent = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+
+      // 1. Commit JSON to src/boards/
+      const jsonPath = `src/boards/data_${meta.id}.json`;
+      log(`Uploading ${jsonPath}…`);
+      try {
+        const existing = await getFileSHA(token, jsonPath);
+        await commitFile(token, jsonPath, jsonContent, `Add board: ${meta.id}`, existing);
+        log(`✓ JSON committed`);
+      } catch(e) {
+        showUploadStatus('error', `Failed to commit JSON: ${e.message}`);
+        approveBtn.disabled = false;
+        return;
+      }
+
+      // 2. Commit image to public/boards/ (if uploaded)
+      if (uploadedImageBase64 && imageFilename) {
+        const imgPath = `public/boards/${imageFilename}`;
+        log(`Uploading ${imgPath}…`);
+        try {
+          const existing = await getFileSHA(token, imgPath);
+          await commitFile(token, imgPath, uploadedImageBase64, `Add board image: ${imageFilename}`, existing);
+          log(`✓ Image committed`);
+        } catch(e) {
+          log(`⚠ Image upload failed (${e.message}) — add it manually to public/boards/`);
+          showUploadStatus('warning', 'JSON uploaded. Image upload failed — add it to public/boards/ manually, then redeploy.');
+          approveBtn.disabled = false;
+          return;
+        }
+      } else if (!uploadedImageBase64) {
+        log(`⚠ No image uploaded — add it manually to public/boards/ if needed`);
+      }
+
+      showUploadStatus('ok', `Board "${meta.id}" uploaded! The site will rebuild shortly.`);
+      log('Done. GitHub will trigger a site rebuild.');
+
+      // Clean up the Gist now that files are committed
+      if (gistId) {
+        try {
+          await fetch(`https://api.github.com/gists/${gistId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+          });
+          log('✓ Approval Gist deleted');
+        } catch { log('Note: could not delete Gist — remove it manually if you like'); }
+      }
+    }
+
+    async function getFileSHA(token, path) {
+      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      return data.sha || null;
+    }
+
+    async function commitFile(token, path, base64Content, message, sha) {
+      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+      const body = { message, content: base64Content, branch: GITHUB_BRANCH };
+      if (sha) body.sha = sha;
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let detail = text;
+        try { detail = JSON.parse(text).message; } catch {}
+        throw new Error(`${res.status}: ${detail}`);
+      }
+    }
+
+    function showUploadStatus(type, msg) {
+      const el = document.getElementById('uploadStatus');
+      el.className = `upload-status ${type}`;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function log(msg) {
+      const el = document.getElementById('stepLog');
+      const div = document.createElement('div');
+      div.textContent = msg;
+      el.appendChild(div);
+    }
+
+    function clearLog() {
+      document.getElementById('stepLog').innerHTML = '';
+      const el = document.getElementById('uploadStatus');
+      el.className = 'upload-status hidden';
+      el.textContent = '';
+    }
+
+    init();
+    </script>
+  </body>
+</html>
