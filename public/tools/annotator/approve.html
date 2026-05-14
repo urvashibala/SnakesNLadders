@@ -122,6 +122,7 @@
         ['Win Square',    meta.winSquare],
         ['Squares',       squares.length],
         ['Transitions',   `${transitions.length} (${transitions.filter(t=>t.type==='snake').length} snakes, ${transitions.filter(t=>t.type==='ladder').length} ladders)`],
+        ...(meta.contributor ? [['Annotated by', meta.contributor]] : []),
       ];
       document.getElementById('reviewTable').innerHTML = rows.map(([k,v]) =>
         `<tr><th>${k}</th><td>${v}</td></tr>`
@@ -131,7 +132,8 @@
       const data = { id: meta.id, name: meta.name, historyText: meta.historyText,
         imageUrl: meta.imageUrl, totalSquares: meta.totalSquares,
         startSquare: meta.startSquare, winSquare: meta.winSquare,
-        squares, transitions };
+        squares, transitions,
+        ...(meta.contributor ? { contributor: meta.contributor } : {}) };
       document.getElementById('jsonPre').textContent = JSON.stringify(data, null, 2);
 
       // Load image from ImgBB URL
@@ -190,7 +192,8 @@
       const data = { id: meta.id, name: meta.name, historyText: meta.historyText,
         imageUrl: meta.imageUrl, totalSquares: meta.totalSquares,
         startSquare: meta.startSquare, winSquare: meta.winSquare,
-        squares, transitions };
+        squares, transitions,
+        ...(meta.contributor ? { contributor: meta.contributor } : {}) };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = `data_${meta.id}.json`; a.click();
@@ -216,7 +219,8 @@
       const data = { id: meta.id, name: meta.name, historyText: meta.historyText,
         imageUrl: meta.imageUrl, totalSquares: meta.totalSquares,
         startSquare: meta.startSquare, winSquare: meta.winSquare,
-        squares, transitions };
+        squares, transitions,
+        ...(meta.contributor ? { contributor: meta.contributor } : {}) };
       const jsonContent = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
 
       // 1. Commit JSON to src/boards/

@@ -60,6 +60,7 @@ const fieldImageFilename = document.getElementById('fieldImageFilename');
 const fieldTotal         = document.getElementById('fieldTotal');
 const fieldWin           = document.getElementById('fieldWin');
 const wordCount          = document.getElementById('wordCount');
+const fieldContributor   = document.getElementById('fieldContributor');
 const backToStep3Btn     = document.getElementById('backToStep3Btn');
 const step5              = document.getElementById('step5');
 const reviewTable        = document.getElementById('reviewTable');
@@ -485,6 +486,7 @@ backToStep3Btn.addEventListener('click', () => setStep(3));
 metaForm.addEventListener('submit', (ev) => {
   ev.preventDefault();
   if (!validateMeta()) return;
+  const contributor = fieldContributor.value.trim();
   boardMeta = {
     id:           fieldId.value.trim(),
     name:         fieldName.value.trim(),
@@ -493,6 +495,7 @@ metaForm.addEventListener('submit', (ev) => {
     totalSquares: parseInt(fieldTotal.value, 10),
     startSquare:  parseInt(document.querySelector('input[name="startSq"]:checked').value, 10),
     winSquare:    parseInt(fieldWin.value, 10),
+    ...(contributor ? { contributor } : {}),
   };
   setStep(5);
 });
@@ -544,6 +547,7 @@ function buildReview() {
     ['Win Square',    boardMeta.winSquare],
     ['Squares',       `${points.length} marked`],
     ['Transitions',   `${transitions.length} (${transitions.filter(t=>t.type==='snake').length} snakes, ${transitions.filter(t=>t.type==='ladder').length} ladders)`],
+    ...(boardMeta.contributor ? [['Annotated by', boardMeta.contributor]] : []),
   ];
   reviewTable.innerHTML = rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
 
@@ -588,6 +592,7 @@ function buildJSON() {
     winSquare:    boardMeta.winSquare,
     squares:      points.map(p => ({ id: p.id, x: p.x, y: p.y })),
     transitions:  transitions.map(t => ({ type: t.type, from: t.from, to: t.to })),
+    ...(boardMeta.contributor ? { contributor: boardMeta.contributor } : {}),
   }, null, 2);
 }
 

@@ -74,6 +74,7 @@ export class GameView {
               <img class="gv-board-img" id="gv-board-img" alt="" />
               <div class="gv-token-layer" id="gv-token-layer"></div>
             </div>
+            <div class="gv-board-credit" id="gv-board-credit"></div>
           </div>
 
           <!-- Right sidebar -->
@@ -222,6 +223,12 @@ export class GameView {
     // Show game area
     this._el.querySelector('#gv-setup').style.display     = 'none'
     this._el.querySelector('#gv-game-area').style.display = 'block'
+
+    // Contributor credit
+    const creditEl = this._el.querySelector('#gv-board-credit')
+    creditEl.textContent = this._board.contributor
+      ? `Annotated by ${this._board.contributor}`
+      : ''
 
     // ResizeObserver to keep token positions correct
     if (this._resizeObs) this._resizeObs.disconnect()
