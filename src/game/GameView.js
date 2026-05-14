@@ -202,7 +202,7 @@ export class GameView {
     this._buildPlayerCards(players)
 
     // DiceAnimator bound to board-wrap
-    this._animator = new DiceAnimator(this._el.querySelector('#gv-board-wrap'))
+    this._animator = new DiceAnimator(this._el.querySelector('.gv-board-scroll'))
 
     // Board image — set src after tokens are in DOM
     const boardImg = this._el.querySelector('#gv-board-img')

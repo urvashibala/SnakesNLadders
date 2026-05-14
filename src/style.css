@@ -680,6 +680,7 @@ body.scroll-hint-left  { cursor: w-resize; }
 .gv-board-scroll {
   flex: 1;
   overflow: hidden;
+  position: relative;   /* dice canvas anchors here, outside the camera transform */
   display: flex;
   align-items: flex-start;
   justify-content: center;
