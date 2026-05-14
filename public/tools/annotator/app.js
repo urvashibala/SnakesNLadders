@@ -1,15 +1,10 @@
-// ── Default credentials (pre-fill on first visit) ─────────────────────────
-;(function seedCredentials() {
-  const defaults = {
-    imgbb_key:    '08a9717d0f278f08f2dcf413be4cac27',
-    ejs_service:  'snakes_and_ladders',
-    ejs_template: 'template_93ufufa',
-    ejs_key:      'tBSb3OERxxfySsy6n',
-  };
-  for (const [k, v] of Object.entries(defaults)) {
-    if (!localStorage.getItem(k)) localStorage.setItem(k, v);
-  }
-})();
+// ── Credentials (hardcoded — not exposed in UI) ────────────────────────────
+const CREDS = {
+  imgbb_key:    '08a9717d0f278f08f2dcf413be4cac27',
+  ejs_service:  'snakes_and_ladders',
+  ejs_template: 'template_93ufufa',
+  ejs_key:      'tBSb3OERxxfySsy6n',
+};
 
 // ── State ──────────────────────────────────────────────────────────────────
 let nsfwModel = null;
@@ -73,11 +68,6 @@ const reviewCanvas       = document.getElementById('reviewCanvas');
 const jsonOut            = document.getElementById('jsonOut');
 const copyBtn            = document.getElementById('copyBtn');
 const downloadBtn        = document.getElementById('downloadBtn');
-const imgbbKey           = document.getElementById('imgbbKey');
-const ejsService         = document.getElementById('ejsService');
-const ejsTemplate        = document.getElementById('ejsTemplate');
-const ejsKey             = document.getElementById('ejsKey');
-const saveEjsBtn         = document.getElementById('saveEjsBtn');
 const sendBtn            = document.getElementById('sendBtn');
 const sendStatus         = document.getElementById('sendStatus');
 const backToStep4Btn     = document.getElementById('backToStep4Btn');
@@ -566,10 +556,6 @@ function buildReview() {
   reviewImg.src = boardImgObjectUrl;
   jsonOut.value = buildJSON();
 
-  imgbbKey.value    = localStorage.getItem('imgbb_key')    || '';
-  ejsService.value  = localStorage.getItem('ejs_service')  || '';
-  ejsTemplate.value = localStorage.getItem('ejs_template') || '';
-  ejsKey.value      = localStorage.getItem('ejs_key')      || '';
 }
 
 function renderReview() {
@@ -619,24 +605,7 @@ downloadBtn.addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
 });
 
-saveEjsBtn.addEventListener('click', () => {
-  localStorage.setItem('imgbb_key',    imgbbKey.value.trim());
-  localStorage.setItem('ejs_service',  ejsService.value.trim());
-  localStorage.setItem('ejs_template', ejsTemplate.value.trim());
-  localStorage.setItem('ejs_key',      ejsKey.value.trim());
-  saveEjsBtn.textContent = 'Saved ✓';
-  setTimeout(() => { saveEjsBtn.textContent = 'Save credentials'; }, 2000);
-});
-
 sendBtn.addEventListener('click', async () => {
-  const imgbb = imgbbKey.value.trim() || localStorage.getItem('imgbb_key');
-  const svc   = ejsService.value.trim()  || localStorage.getItem('ejs_service');
-  const tpl   = ejsTemplate.value.trim() || localStorage.getItem('ejs_template');
-  const key   = ejsKey.value.trim()      || localStorage.getItem('ejs_key');
-
-  if (!imgbb) { showSendStatus('error', 'Enter and save your ImgBB API key first.'); return; }
-  if (!svc || !tpl || !key) { showSendStatus('error', 'Enter and save your EmailJS credentials first.'); return; }
-
   sendBtn.disabled = true;
 
   // Upload full-quality image to ImgBB
@@ -644,7 +613,7 @@ sendBtn.addEventListener('click', async () => {
   if (boardImgFile) {
     showSendStatus('info', 'Uploading image…');
     try {
-      imageUrl = await uploadToImgbb(boardImgFile, imgbb);
+      imageUrl = await uploadToImgbb(boardImgFile, CREDS.imgbb_key);
     } catch (e) {
       showSendStatus('error', `Image upload failed: ${e.message}`);
       sendBtn.disabled = false;
@@ -668,8 +637,8 @@ sendBtn.addEventListener('click', async () => {
   const approvalUrl = new URL('approve.html?data=' + encoded, window.location.href).href;
 
   try {
-    emailjs.init(key);
-    await emailjs.send(svc, tpl, {
+    emailjs.init(CREDS.ejs_key);
+    await emailjs.send(CREDS.ejs_service, CREDS.ejs_template, {
       board_id:    boardMeta.id,
       board_name:  boardMeta.name,
       preview_url: approvalUrl,
