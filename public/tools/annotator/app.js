@@ -623,11 +623,9 @@ sendBtn.addEventListener('click', async () => {
 
   showSendStatus('info', 'Sending approval email…');
 
-  // Strip pixel x/y coords — approve.html only needs IDs, not canvas positions
-  const squaresStripped = points.map(({ id }) => ({ id }));
   const payload = {
     meta:          boardMeta,
-    squares:       squaresStripped,
+    squares:       points.map(({ id, x, y }) => ({ id, x, y })),
     transitions:   transitions,
     imageFilename: boardImgFile ? boardImgFile.name : '',
     imageUrl,
